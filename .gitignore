@@ -1,0 +1,24 @@
+# OS / editors
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Helm
+charts/*/charts/
+*.tgz
+
+# Local work (make writes renders, dumps, packages here)
+.tmp/
+.env
+*.local.yaml
+kubeconfig*
+
+# Python (hack/)
+__pycache__/
+.venv/
+
+# Agents
+.claude/settings.local.json
+.codex/
