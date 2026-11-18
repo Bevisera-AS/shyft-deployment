@@ -1,0 +1,87 @@
+# Every option switched on at once, for the snapshot suite.
+image:
+  repository: registry.example.org/shyft/fedora44-shyft-app
+  digest: sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+  pullPolicy: Always
+imagePullSecrets:
+  - name: regcred
+basePort: 22000
+core:
+  resources:
+    dtss:
+      requests:
+        cpu: "2"
+        memory: 32Gi
+      limits:
+        memory: 64Gi
+  extraEnv:
+    - name: TZ
+      value: UTC
+  podAnnotations:
+    example.org/owner: hydrology
+  podLabels:
+    team: hydrology
+  nodeSelector:
+    pool: core
+  tolerations:
+    - key: dedicated
+      operator: Exists
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: pool
+                operator: In
+                values: [core]
+  priorityClassName: high
+  terminationGracePeriodSeconds: 120
+drms:
+  replicaCount: 8
+  resources:
+    requests:
+      cpu: "16"
+      memory: 64Gi
+    limits:
+      cpu: "16"
+      memory: 64Gi
+  topologySpreadConstraints:
+    - maxSkew: 2
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+  podDisruptionBudget:
+    enabled: true
+  extraEnv:
+    - name: TZ
+      value: UTC
+  podAnnotations:
+    example.org/owner: hydrology
+  podLabels:
+    team: hydrology
+  nodeSelector:
+    pool: drms
+  tolerations:
+    - key: dedicated
+      operator: Exists
+  priorityClassName: low
+persistence:
+  var:
+    existingClaim: shyft-var
+  data:
+    enabled: true
+    existingClaim: shyft-data
+    readOnly: true
+    mountInDrms: true
+service:
+  type: LoadBalancer
+  cloud: aws
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+networkPolicy:
+  allowNamespace: false
+  clientPeers:
+    - ipBlock:
+        cidr: 10.0.0.0/16
+serviceAccount:
+  annotations:
+    example.org/owner: hydrology

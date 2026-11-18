@@ -1,0 +1,179 @@
+# Every tool, pinned, and every task. `mise tasks` lists the tasks; `mise run <task>` runs one with these
+# tools first on PATH. CI calls the same tasks. Renovate bumps the tools. kind goes together with
+# KIND_NODE_IMAGE below and the node images in lint-test.yaml.
+
+[tools]
+helm = "4.3.1"
+kubectl = "1.37.2"  # CI lanes override it with MISE_KUBECTL_VERSION to match the cluster
+kind = "0.33.0"
+helm-ct = "3.15.0"
+helm-docs = "1.14.2"
+kubeconform = "0.8.0"
+# Both are Helm plugins upstream. Their release binaries run standalone: `untt` and `schema`.
+"github:helm-unittest/helm-unittest" = "1.2.1"
+"github:losisin/helm-values-schema-json" = "2.6.0"
+yq = "4.54.3"
+actionlint = "1.7.12"
+shellcheck = "0.11.0"
+zizmor = "1.32.0"
+# `ct lint` shells out to these two Python linters; uv installs them.
+uv = "0.13.7"
+"pipx:yamllint" = "1.38.0"
+"pipx:yamale" = "6.1.0"
+
+[env]
+CHART = "charts/shyft-hydrology"
+# No KUBECONFIG here: it would follow you into an activated shell. The cluster tasks go through hack/kind.sh,
+# which gives them .tmp/kubeconfig and checks the context and Kubernetes version.
+# Knobs: set them in the environment to override, e.g. `K8S_VERSIONS=1.37.0 mise run kubeconform`.
+# From the kind v0.33.0 release notes.
+KIND_NODE_IMAGE = "{{ get_env(name='KIND_NODE_IMAGE', default='kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5') }}"
+KIND_CLUSTER = "{{ get_env(name='KIND_CLUSTER', default='shyft') }}"
+# Kubernetes versions the rendered manifests are validated against. The first is Chart.yaml's kubeVersion floor.
+K8S_VERSIONS = "{{ get_env(name='K8S_VERSIONS', default='1.30.0 1.34.0 1.37.0') }}"
+# CNI of the kind cluster, see .github/kind-config.yaml.
+# renovate: datasource=github-releases depName=projectcalico/calico
+CALICO_VERSION = "v3.33.0"
+
+# Every task runs under strict bash. mise's own default, `sh -o errexit`, loses a failure in a pipeline, and
+# mise ignores `unix_default_inline_shell_args` in a project file: this is the setting that works.
+[task_config]
+shell = "bash -euo pipefail -c"
+
+# Gotchas, for anyone adding a task:
+# - `depends` run in parallel. A sequence is `run = [{ task = "a" }, { task = "b" }]`.
+# - `mise run a b` passes `b` to task a as an argument. Several tasks: a task like `check`, or `mise run a ::: b`
+#   (in parallel).
+
+# --- Before pushing
+
+[tasks.check]
+description = "Everything without a cluster, in turn: check-generated, lint, lint-actions, unittest, kubeconform"
+run = [
+  { task = "check-generated" },
+  { task = "lint" },
+  { task = "lint-actions" },
+  { task = "unittest" },
+  { task = "kubeconform" },
+]
+
+# --- Generated files
+
+[tasks.docs]
+description = "Regenerate the chart README.md from values.yaml and README.md.gotmpl"
+run = "helm-docs --chart-search-root charts --sort-values-order file"
+
+[tasks.schema]
+description = "Regenerate values.schema.json from values.yaml"
+run = 'cd "$CHART" && schema'
+
+[tasks.check-generated]
+description = "Regenerate; fail if README.md or values.schema.json were stale"
+run = '''
+generated="$CHART/README.md $CHART/values.schema.json"
+before=$(cat $generated | shasum)
+mise run docs >/dev/null 2>&1
+mise run schema >/dev/null 2>&1
+after=$(cat $generated | shasum)
+if [ "$before" != "$after" ]; then
+  echo "Stale generated files. Run 'mise run docs' and 'mise run schema', and commit: $generated"
+  exit 1
+fi
+echo "generated files are up to date"
+'''
+
+# --- Static checks
+
+[tasks.lint]
+description = "ct lint on every chart (yamllint, Chart.yaml, helm lint per ci/ file), then examples, changelog, scripts, CI test steps"
+run = [
+  "ct lint --config .github/ct.yaml --all --check-version-increment=false",
+  "yamllint --config-file .github/lintconf.yaml --strict $CHART/examples $CHART/tests",
+  "hack/check-changelog.sh",
+  "shellcheck hack/*.sh",
+  # CI runs each kind test as its own step: a new hack/*-test.sh must get one, or CI would skip it.
+  'for t in hack/*-test.sh; do n=${t#hack/}; grep -qE "run: mise run test ${n%-test.sh}\$" .github/workflows/lint-test.yaml || { echo "$t has no step in .github/workflows/lint-test.yaml" >&2; exit 1; }; done',
+]
+
+[tasks.check-version]
+description = "Charts changed against origin/master must have a higher version"
+run = "ct lint --config .github/ct.yaml --validate-yaml=false --validate-chart-schema=false"
+
+[tasks.lint-actions]
+description = "actionlint + zizmor on the workflows"
+run = ["actionlint", "zizmor --offline .github/workflows"]
+
+[tasks.unittest]
+description = "helm-unittest"
+run = "untt --strict $CHART"
+
+[tasks.snapshot-update]
+description = "Rewrite helm-unittest snapshots. Say why in the commit message"
+run = "untt --strict --update-snapshot $CHART"
+
+[tasks.kubeconform]
+description = "Render every ci/ and examples/ file and validate against K8S_VERSIONS"
+run = '''
+[[ $K8S_VERSIONS =~ [^[:space:]] ]] || { echo "K8S_VERSIONS is empty: nothing would be validated" >&2; exit 1; }
+mkdir -p .tmp/kubeconform
+for f in "$CHART"/ci/*-values.yaml "$CHART"/examples/*.yaml; do
+  for v in $K8S_VERSIONS; do
+    printf '%-60s k8s %-8s ' "$f" "$v"
+    helm template shyft-hydrology "$CHART" --namespace shyft --kube-version "$v" -f "$f" |
+      kubeconform -strict -summary -kubernetes-version "$v" -cache .tmp/kubeconform
+  done
+done
+'''
+
+[tasks.render]
+description = "Render an examples/ profile: mise run render sigma2-nird"
+usage = 'arg "[profile]" help="a file in examples/, without .yaml" default="sigma2-nird"'
+quiet = true
+run = 'helm template shyft-hydrology "$CHART" --namespace shyft -f "$CHART/examples/${usage_profile}.yaml"'
+
+# --- kind
+
+[tasks.kind-up]
+description = "3-node kind cluster with Calico and its own kubeconfig in .tmp/"
+run = "hack/kind-up.sh"
+
+[tasks.kind-down]
+description = "Delete the kind cluster"
+run = 'KUBECONFIG=.tmp/kubeconfig kind delete cluster --name "$KIND_CLUSTER"'
+
+# Every task below touches the cluster, so each goes through hack/kind.sh.
+
+[tasks.load-image]
+description = "Put the chart's Shyft image on the kind workers (each pulls it, in parallel)"
+run = "hack/kind.sh hack/load-image.sh"
+
+[tasks.e2e]
+description = "Everything CI runs on kind: ct-install, then test (about 8 minutes)"
+run = [{ task = "ct-install" }, { task = "test" }]
+
+[tasks.ct-install]
+description = "ct install per ci/ file: install, upgrade, helm test"
+run = "hack/kind.sh ct install --config .github/ct.yaml --all --upgrade"
+
+[tasks.test]
+description = "Every hack/*-test.sh in turn, or one: mise run test drms"
+usage = 'arg "[name]" help="persistence, drms, networkpolicy or existing-claims"'
+run = '''
+if [ -n "${usage_name:-}" ]; then
+  [ -x "hack/${usage_name}-test.sh" ] || { echo "There is no hack/${usage_name}-test.sh" >&2; exit 1; }
+  exec hack/kind.sh "hack/${usage_name}-test.sh"
+fi
+for t in hack/*-test.sh; do echo; echo "=== $t"; hack/kind.sh "$t"; done
+'''
+
+[tasks.upstream-drms]
+description = "Not in e2e: what a dead drms registration costs upstream. Run after a Shyft bump"
+run = "hack/kind.sh hack/drms-dead-registration.sh"
+
+[tasks.dump]
+description = "Cluster diagnostics into .tmp/dump/"
+run = "hack/kind.sh --context-only hack/dump.sh .tmp/dump"
+
+[tasks.clean]
+description = "Remove .tmp/ (keeps the kind cluster; `mise run kind-down` deletes it)"
+run = "rm -rf .tmp"

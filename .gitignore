@@ -9,11 +9,13 @@
 charts/*/charts/
 *.tgz
 
-# Local work (make writes renders, dumps, packages here)
+# Local work (the mise tasks write the kind kubeconfig, dumps and caches here)
 .tmp/
 .env
 *.local.yaml
 kubeconfig*
+# `ct install --upgrade` checks out the target branch here while it runs, and removes it afterwards
+/ct-previous-revision*/
 
 # Python (hack/)
 __pycache__/

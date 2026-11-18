@@ -1,0 +1,6 @@
+{{- include "shyft.testPod" (dict
+  "root" .
+  "name" "connection"
+  "script" "test_connection.py"
+  "about" "Read-only: asks every core service for its model list or version, through the Service."
+  "weight" "0") }}

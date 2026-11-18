@@ -1,0 +1,82 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Versions in mise.toml's [env] marked with a `# renovate: datasource=… depName=…` comment on the line above",
+      "managerFilePatterns": [
+        "/^mise\\.toml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n[A-Z_]+ = \"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "The Shyft image tag: appVersion in Chart.yaml, marked with a `# renovate:` comment on the line above",
+      "managerFilePatterns": [
+        "/^charts/[^/]+/Chart\\.yaml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nappVersion: \"(?<currentValue>[^\"]+)\""
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "One PR for all GitHub Actions bumps",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "kindest/node images belong to a kind release",
+      "matchDepNames": [
+        "kind"
+      ],
+      "prBodyNotes": [
+        "Update `KIND_NODE_IMAGE` in `mise.toml` and the two node images in `lint-test.yaml` from this kind release's notes."
+      ]
+    },
+    {
+      "description": "Shyft image: `appVersion` in the chart's Chart.yaml (custom manager). Its tags (37.3.0-1.1) are not semver.",
+      "matchDepNames": [
+        "/shyft-app$/"
+      ],
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)-(?<build>\\d+)\\.(?<revision>\\d+)$"
+    },
+    {
+      "description": "Shyft patch bump, same line: a chart patch release",
+      "matchDepNames": [
+        "/shyft-app$/"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "prBodyNotes": [
+        "Bump the chart's patch version, add a `CHANGELOG.md` entry and run `mise run docs`, or the `Chart` check fails."
+      ]
+    },
+    {
+      "description": "New Shyft line (major or minor): a chart minor release",
+      "matchDepNames": [
+        "/shyft-app$/"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "prBodyNotes": [
+        "New Shyft line. Bump the chart's minor version, add a `CHANGELOG.md` entry, and run `mise run docs`."
+      ]
+    }
+  ]
+}

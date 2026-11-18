@@ -1,0 +1,89 @@
+{{- if gt (int .Values.drms.replicaCount) 0 }}
+{{- $fullname := include "shyft.fullname" . -}}
+{{- $drms := dict "root" . "component" "drms" -}}
+{{- $data := .Values.persistence.data -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-drms
+  labels:
+    {{- include "shyft.labels" $drms | nindent 4 }}
+spec:
+  replicas: {{ .Values.drms.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "shyft.selectorLabels" $drms | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "shyft.labels" $drms | nindent 8 }}
+        {{- with .Values.drms.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.drms.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "shyft.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.drms.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.drms.terminationGracePeriodSeconds }}
+      # A drms registers "<interface>:<port>" with task, so it listens on its own pod IP: with 0.0.0.0 it
+      # would register --host, which is task's address. --host is where it finds task.
+      containers:
+        {{- include "shyft.container" (dict
+          "root" .
+          "service" "drms"
+          "args" (list "--interface" "$(POD_IP)" "--host" $fullname "--root-dir" "/tmp")
+          "env" (list (dict "name" "POD_IP" "valueFrom" (dict "fieldRef" (dict "fieldPath" "status.podIP"))))
+          "extraEnv" .Values.drms.extraEnv
+          "resources" .Values.drms.resources
+          "path" "drms.resources"
+          "var" false
+          "data" (and $data.enabled $data.mountInDrms)) | nindent 8 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if and $data.enabled $data.mountInDrms }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $data.existingClaim }}
+            readOnly: {{ $data.readOnly }}
+        {{- end }}
+      {{- if or .Values.drms.spreadAcrossNodes .Values.drms.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- if .Values.drms.spreadAcrossNodes }}
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "shyft.selectorLabels" $drms | nindent 14 }}
+        {{- end }}
+        {{- with .Values.drms.topologySpreadConstraints }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.drms.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.drms.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.drms.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

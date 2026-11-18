@@ -1,0 +1,86 @@
+name: Release
+
+# Publishes every chart version that is not published yet, the chart-releaser way:
+# a GitHub release `<chart>-<version>` with the packaged chart, and `index.yaml` on
+# the `gh-pages` branch, which GitHub Pages serves as the Helm repository.
+# A release that failed halfway (say, a draft chart-releaser left behind) is for a human to repair.
+# One-time setup: a `gh-pages` branch, and Settings > Pages > branch `gh-pages`.
+
+on:
+  push:
+    branches: [master]
+    paths: [charts/**]
+  workflow_dispatch:  # to rerun after a repair
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  lint-test:
+    uses: ./.github/workflows/lint-test.yaml  # zizmor: ignore[self-repository]  actionlint doesn't accept $/ yet
+
+  release:
+    name: Release
+    needs: [lint-test]  # only a commit that passed lint and the kind install, here and now
+    if: github.ref == 'refs/heads/master'  # a manual run from another branch only tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: release  # repo settings: deployment branches = master only
+    permissions:
+      contents: write  # GitHub releases; index.yaml on gh-pages
+      id-token: write  # sign the attestation
+      attestations: write  # store it
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0  # chart-releaser builds the index on origin/gh-pages
+          persist-credentials: false  # chart-releaser pushes with CR_TOKEN
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c  # v5.2.6
+        with:
+          version: 2026.11.7
+          cache: false  # no shared cache in a job that publishes
+          install_args: helm yq  # all this job needs
+
+      # Packaging here, not in chart-releaser, lets the packages be attested before anything is published.
+      # chart-releaser then uploads only versions that have no release yet (skip_existing). On a rerun that
+      # publishes nothing, the attestation covers packages that are never uploaded: harmless.
+      - name: Package the charts
+        run: |
+          mkdir -p .cr-release-packages
+          for chart in charts/*/; do helm package "$chart" --destination .cr-release-packages; done
+
+      - name: Attest the packages
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: .cr-release-packages/*.tgz
+
+      - name: Configure git for the index commit
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      # v1.7.0 fails with skip_packaging after it has published ("latest_tag: unbound variable").
+      - name: Publish releases and index
+        uses: helm/chart-releaser-action@92c6b97fa9f664492a2592e0d1d80bc6bf378957  # v1.9.0
+        with:
+          skip_packaging: true
+          skip_existing: true
+        env:
+          CR_TOKEN: ${{ github.token }}
+
+      # Every chart's current version, also when nothing was published: sets notes an earlier run did not get to.
+      # `mise run lint` makes sure the CHANGELOG.md section exists before the merge.
+      - name: Release notes from CHANGELOG.md
+        run: |
+          for chart in charts/*/; do
+            version=$(yq .version "${chart}Chart.yaml")
+            awk -v v="[${version}]" '/^## /{if(f)exit; if(index($0,v))f=1; next} f' "${chart}CHANGELOG.md" >notes.md
+            gh release edit "$(yq .name "${chart}Chart.yaml")-${version}" --notes-file notes.md
+          done

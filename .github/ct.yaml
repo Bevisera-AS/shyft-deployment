@@ -1,0 +1,10 @@
+# chart-testing config, used by the mise tasks lint, check-version and ct-install.
+target-branch: master
+chart-dirs:
+  - charts
+# ct looks for these two in /etc/ct and ~/.ct. mise installs only the binary, so they are vendored here.
+chart-yaml-schema: .github/chart_schema.yaml
+lint-conf: .github/lintconf.yaml
+check-version-increment: true
+validate-maintainers: false
+helm-extra-args: --timeout 600s

@@ -1,0 +1,151 @@
+suite: drms
+release:
+  name: shyft-hydrology
+  namespace: shyft
+tests:
+  - it: is a Deployment with drms.replicaCount pods
+    template: templates/drms-deployment.yaml
+    set:
+      drms.replicaCount: 8
+    asserts:
+      - isKind: {of: Deployment}
+      - equal: {path: metadata.name, value: shyft-hydrology-drms}
+      - equal: {path: spec.replicas, value: 8}
+
+  - it: listens on its own pod IP and finds task through the Service
+    template: templates/drms-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: [python3, /opt/shyft/hydrology/service/drms.py]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [--interface, $(POD_IP), --host, shyft-hydrology, --root-dir, /tmp]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+      - equal: {path: spec.template.spec.enableServiceLinks, value: false}
+
+  - it: is stateless, with only /tmp to write to
+    template: templates/drms-deployment.yaml
+    asserts:
+      - equal: {path: spec.template.spec.volumes, value: [{name: tmp, emptyDir: {}}]}
+      - equal: {path: 'spec.template.spec.containers[0].volumeMounts', value: [{name: tmp, mountPath: /tmp}]}
+
+  - it: prefers one drms per node
+    template: templates/drms-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints
+          value:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: shyft-hydrology
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/component: drms
+
+  - it: can drop the spread and take custom constraints
+    template: templates/drms-deployment.yaml
+    set:
+      drms.spreadAcrossNodes: false
+    asserts:
+      - notExists: {path: spec.template.spec.topologySpreadConstraints}
+
+  - it: appends custom spread constraints
+    template: templates/drms-deployment.yaml
+    set:
+      drms.topologySpreadConstraints:
+        - {maxSkew: 2, topologyKey: topology.kubernetes.io/zone, whenUnsatisfiable: DoNotSchedule}
+    asserts:
+      - lengthEqual: {path: spec.template.spec.topologySpreadConstraints, count: 2}
+      - equal: {path: 'spec.template.spec.topologySpreadConstraints[1].topologyKey', value: topology.kubernetes.io/zone}
+
+  - it: passes resources, pod metadata, extra env and scheduling through
+    template: templates/drms-deployment.yaml
+    set:
+      drms:
+        resources:
+          requests: {cpu: "16", memory: 64Gi}
+          limits: {memory: 64Gi}
+        extraEnv:
+          - {name: OMP_NUM_THREADS, value: "16"}
+        podAnnotations: {example.org/a: "1"}
+        podLabels: {team: hydrology}
+        nodeSelector: {pool: drms}
+        tolerations:
+          - {key: dedicated, operator: Exists}
+        affinity:
+          nodeAffinity: {}
+        priorityClassName: low
+        terminationGracePeriodSeconds: 45
+    asserts:
+      - equal: {path: 'spec.template.spec.containers[0].resources', value: {requests: {cpu: "16", memory: 64Gi}, limits: {memory: 64Gi}}}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: OMP_NUM_THREADS, value: "16"}
+      - equal: {path: 'spec.template.metadata.annotations["example.org/a"]', value: "1"}
+      - equal: {path: spec.template.metadata.labels.team, value: hydrology}
+      - equal: {path: spec.template.spec.nodeSelector, value: {pool: drms}}
+      - equal: {path: spec.template.spec.tolerations, value: [{key: dedicated, operator: Exists}]}
+      - exists: {path: spec.template.spec.affinity.nodeAffinity}
+      - equal: {path: spec.template.spec.priorityClassName, value: low}
+      - equal: {path: spec.template.spec.terminationGracePeriodSeconds, value: 45}
+
+  - it: limits its memory by default, and not its CPU
+    template: templates/drms-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {memory: 2Gi}
+
+  # Helm merges values: raising only the request keeps the default 2Gi limit, which Kubernetes would refuse.
+  - it: refuses a memory request above the memory limit, naming the value to set
+    template: templates/drms-deployment.yaml
+    set:
+      drms.resources.requests.memory: 64Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: "drms.resources: the memory request 64Gi is above the memory limit 2Gi.*Set drms.resources.limits.memory too"
+
+  - it: has no PodDisruptionBudget by default
+    template: templates/drms-pdb.yaml
+    asserts:
+      - hasDocuments: {count: 0}
+
+  - it: creates a PodDisruptionBudget on request
+    template: templates/drms-pdb.yaml
+    set:
+      drms.podDisruptionBudget:
+        enabled: true
+        maxUnavailable: 25%
+    asserts:
+      - isKind: {of: PodDisruptionBudget}
+      - equal: {path: spec.maxUnavailable, value: 25%}
+      - equal: {path: 'spec.selector.matchLabels["app.kubernetes.io/component"]', value: drms}
+
+  - it: deploys nothing for drms when replicaCount is 0
+    templates:
+      - templates/drms-deployment.yaml
+      - templates/drms-pdb.yaml
+    set:
+      drms.replicaCount: 0
+      drms.podDisruptionBudget.enabled: true
+    asserts:
+      - hasDocuments: {count: 0}
+
+  - it: creates only the core NetworkPolicy when replicaCount is 0
+    template: templates/networkpolicy.yaml
+    set:
+      drms.replicaCount: 0
+    asserts:
+      - hasDocuments: {count: 1}
+      - equal: {path: metadata.name, value: shyft-hydrology-core}

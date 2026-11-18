@@ -1,0 +1,369 @@
+# Default values for shyft-hydrology.
+#
+# Comments generate the README (helm-docs: `# --`, `# @section --`) and values.schema.json
+# (`# @schema`). After editing: `mise run docs` and `mise run schema`.
+
+# -- Overrides the chart name in resource names and labels.
+# @section -- 01. Names
+nameOverride: ""
+
+# -- Overrides the full resource name prefix. Keep it under 40 characters.
+# @section -- 01. Names
+fullnameOverride: ""
+
+image:
+  # -- Shyft image repository. Sigma2 can only pull from its own registry: mirror the image and set this.
+  # @section -- 02. Image
+  repository: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app
+  # -- Shyft image tag. Empty: the chart's `appVersion`, the image it was tested with. Set it only to run
+  # another build of the same Shyft line.
+  # @section -- 02. Image
+  tag: ""
+  # @schema pattern: ^(sha256:[a-f0-9]{64})?$
+  # -- Optional image digest (`sha256:…`). When set, the image is pulled by digest and the tag is informational.
+  # @section -- 02. Image
+  digest: ""
+  # @schema enum: [Always, IfNotPresent, Never]
+  # -- Image pull policy.
+  # @section -- 02. Image
+  pullPolicy: IfNotPresent
+
+# -- Pull secrets for the image, as a list of `{name: …}`.
+# @section -- 02. Image
+imagePullSecrets: []
+
+# @schema minimum: 1024; maximum: 65518
+# -- Base port, shared by core and drms (Shyft's `SHYFT_SERVICE_BASE_PORT`). Each service listens on
+# `basePort + 2·n`: task 0, rmd 1, parameter 2, state 3, drms 4, dtss 5, dstm 6, stm 7, goal_function 8.
+# The offsets are fixed by Shyft.
+# @section -- 03. Ports
+basePort: 20000
+
+core:
+  # Sized for a small install: requests that start on a laptop, memory limits well above what CI measured
+  # (every service peaked under 200 MiB with the demo model). With real data dtss and dstm grow their caches
+  # towards 10 GiB each: raise their limits then. Production sizes: examples/. Set requests and limits
+  # together: a request above the default limit is refused by Kubernetes. No CPU limits, which only throttle.
+  resources:
+    # @schema additionalProperties: true
+    # -- Resources of the task container.
+    # @section -- 04. Core services
+    task:
+      requests:  # @schema hidden
+        cpu: 100m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 1Gi
+    # @schema additionalProperties: true
+    # -- Resources of the rmd (region model description) container.
+    # @section -- 04. Core services
+    rmd:
+      requests:  # @schema hidden
+        cpu: 50m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 1Gi
+    # @schema additionalProperties: true
+    # -- Resources of the parameter container.
+    # @section -- 04. Core services
+    parameter:
+      requests:  # @schema hidden
+        cpu: 50m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 1Gi
+    # @schema additionalProperties: true
+    # -- Resources of the state container.
+    # @section -- 04. Core services
+    state:
+      requests:  # @schema hidden
+        cpu: 50m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 1Gi
+    # @schema additionalProperties: true
+    # -- Resources of the dtss (time-series) container. The one that needs memory: Sigma2 gives it 32 to 64 GiB.
+    # @section -- 04. Core services
+    dtss:
+      requests:  # @schema hidden
+        cpu: 100m
+        memory: 512Mi
+      limits:  # @schema hidden
+        memory: 4Gi
+    # @schema additionalProperties: true
+    # -- Resources of the dstm container.
+    # @section -- 04. Core services
+    dstm:
+      requests:  # @schema hidden
+        cpu: 50m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 2Gi
+    # @schema additionalProperties: true
+    # -- Resources of the stm container.
+    # @section -- 04. Core services
+    stm:
+      requests:  # @schema hidden
+        cpu: 50m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 1Gi
+    # @schema additionalProperties: true
+    # -- Resources of the goal_function container.
+    # @section -- 04. Core services
+    goal_function:
+      requests:  # @schema hidden
+        cpu: 50m
+        memory: 256Mi
+      limits:  # @schema hidden
+        memory: 1Gi
+  # -- Extra environment variables for every core container, as a list of `{name, value}` or `{name, valueFrom}`.
+  # @section -- 04. Core services
+  extraEnv: []
+  # @schema additionalProperties: {type: string}
+  # -- Annotations for the core pod.
+  # @section -- 04. Core services
+  podAnnotations: {}
+  # @schema additionalProperties: {type: string}
+  # -- Extra labels for the core pod.
+  # @section -- 04. Core services
+  podLabels: {}
+  # @schema additionalProperties: {type: string}
+  # -- Node selector for the core pod.
+  # @section -- 04. Core services
+  nodeSelector: {}
+  # -- Tolerations for the core pod.
+  # @section -- 04. Core services
+  tolerations: []
+  # @schema additionalProperties: true
+  # -- Affinity for the core pod.
+  # @section -- 04. Core services
+  affinity: {}
+  # -- Priority class of the core pod.
+  # @section -- 04. Core services
+  priorityClassName: ""
+  # @schema minimum: 0
+  # -- Seconds the services get to stop after SIGTERM.
+  # @section -- 04. Core services
+  terminationGracePeriodSeconds: 60
+
+drms:
+  # @schema minimum: 0
+  # -- Number of drms compute nodes. Each registers itself with task. 0 deploys the core services only.
+  # @section -- 05. drms compute nodes
+  replicaCount: 1
+  # @schema additionalProperties: true
+  # -- Resources of each drms. A run uses every core it can get: Sigma2 gives each 16 CPU and 64 GiB.
+  # @section -- 05. drms compute nodes
+  resources:
+    requests:  # @schema hidden
+      cpu: 250m
+      memory: 512Mi
+    limits:  # @schema hidden
+      memory: 2Gi
+  # -- Prefer one drms per node (a soft topology spread constraint on the hostname).
+  # @section -- 05. drms compute nodes
+  spreadAcrossNodes: true
+  # -- Extra topology spread constraints for drms pods.
+  # @section -- 05. drms compute nodes
+  topologySpreadConstraints: []
+  podDisruptionBudget:
+    # -- Create a PodDisruptionBudget for drms, so a node drain takes them one at a time.
+    # @section -- 05. drms compute nodes
+    enabled: false
+    # @schema type: [integer, string]
+    # -- How many drms may be down during a voluntary disruption. A number or a percentage.
+    # @section -- 05. drms compute nodes
+    maxUnavailable: 1
+  # -- Extra environment variables for the drms container.
+  # @section -- 05. drms compute nodes
+  extraEnv: []
+  # @schema additionalProperties: {type: string}
+  # -- Annotations for drms pods.
+  # @section -- 05. drms compute nodes
+  podAnnotations: {}
+  # @schema additionalProperties: {type: string}
+  # -- Extra labels for drms pods.
+  # @section -- 05. drms compute nodes
+  podLabels: {}
+  # @schema additionalProperties: {type: string}
+  # -- Node selector for drms pods.
+  # @section -- 05. drms compute nodes
+  nodeSelector: {}
+  # -- Tolerations for drms pods.
+  # @section -- 05. drms compute nodes
+  tolerations: []
+  # @schema additionalProperties: true
+  # -- Affinity for drms pods.
+  # @section -- 05. drms compute nodes
+  affinity: {}
+  # -- Priority class of drms pods.
+  # @section -- 05. drms compute nodes
+  priorityClassName: ""
+  # @schema minimum: 0
+  # -- Seconds a drms gets to unregister from task after SIGTERM. A drms killed before that stays in task's
+  # queue until task restarts.
+  # @section -- 05. drms compute nodes
+  terminationGracePeriodSeconds: 30
+
+persistence:
+  # The service databases (SHYFT_SERVICE_ROOT), mounted at /shyft-var in the core pod.
+  var:
+    # -- Keep the service databases on a PersistentVolume. `false` uses an emptyDir: data is lost with the pod.
+    # @section -- 06. Storage
+    enabled: true
+    # -- Use this existing claim instead of creating one. It must allow writes from the core pod's user.
+    # @section -- 06. Storage
+    existingClaim: ""
+    # -- Storage class of the created claim. Empty uses the cluster default.
+    # @section -- 06. Storage
+    storageClass: ""
+    # @schema item: string; minItems: 1
+    # -- Access modes of the created claim.
+    # @section -- 06. Storage
+    accessModes:
+      - ReadWriteOnce
+    # -- Size of the created claim. It cannot be changed through the chart later.
+    # @section -- 06. Storage
+    size: 10Gi
+  # Input data shared with the services, for example forcing data that scripts load into dtss.
+  data:
+    # -- Mount an existing claim with input data into the core containers.
+    # @section -- 06. Storage
+    enabled: false
+    # -- The claim to mount. Required when enabled; the chart never creates it.
+    # @section -- 06. Storage
+    existingClaim: ""
+    # @schema pattern: ^/.+
+    # -- Where to mount it.
+    # @section -- 06. Storage
+    mountPath: /shyft-data
+    # -- Mount it read-only.
+    # @section -- 06. Storage
+    readOnly: false
+    # -- Also mount it into drms pods. With more than one node this needs a ReadWriteMany (or ReadOnlyMany) claim.
+    # @section -- 06. Storage
+    mountInDrms: false
+
+service:
+  # @schema enum: [ClusterIP, LoadBalancer]
+  # -- Service type for the core services. `LoadBalancer` is rendered only with an annotation that makes it
+  # internal: Shyft's protocol has no authentication.
+  # @section -- 07. Network
+  type: ClusterIP
+  # @schema enum: ["", aws, azure, gke]
+  # -- With `type: LoadBalancer`: the cloud the cluster runs in. The chart then requires that cloud's internal
+  # load balancer annotation in `annotations`: another cloud's annotation does nothing there, and the load
+  # balancer would be public.
+  # @section -- 07. Network
+  cloud: ""
+  # @schema additionalProperties: {type: string}
+  # -- Service annotations, for example the cloud's internal load balancer annotation.
+  # @section -- 07. Network
+  annotations: {}
+
+networkPolicy:
+  # -- Create NetworkPolicies: core accepts drms, the chart's test pods and the clients below; drms accepts
+  # only core. They need a CNI that enforces NetworkPolicy.
+  # @section -- 07. Network
+  enabled: true
+  # -- Let every pod in the release namespace connect to the core services.
+  # @section -- 07. Network
+  allowNamespace: true
+  # -- Who else may connect to the core services, as NetworkPolicy peers: a `podSelector`, a
+  # `namespaceSelector`, or with a load balancer an `ipBlock` for your client network.
+  # @section -- 07. Network
+  clientPeers: []
+
+serviceAccount:
+  # -- Create a ServiceAccount. The pods never talk to the Kubernetes API and mount no token.
+  # @section -- 08. Security
+  create: true
+  # -- Name of the ServiceAccount. Empty uses the release's full name, or `default` when `create` is false.
+  # @section -- 08. Security
+  name: ""
+  # @schema additionalProperties: {type: string}
+  # -- ServiceAccount annotations.
+  # @section -- 08. Security
+  annotations: {}
+
+# @schema additionalProperties: true
+# -- Pod security context of every pod. uid and gid 1000 are user `ci` in the Shyft image. On storage that
+# ignores `fsGroup` (NFS), set the uid and gid that own the directory.
+# @section -- 08. Security
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:  # @schema hidden
+    type: RuntimeDefault
+
+# @schema additionalProperties: true
+# -- Container security context of every container. The root filesystem is read-only; /tmp is an emptyDir.
+# @section -- 08. Security
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:  # @schema hidden
+    drop:
+      - ALL
+
+# Shyft speaks a binary protocol, so every probe is a TCP connect to the service's port.
+probes:
+  startup:
+    # @schema minimum: 1
+    # -- Seconds between startup probes.
+    # @section -- 09. Probes
+    periodSeconds: 2
+    # @schema minimum: 1
+    # -- Startup probes that may fail before the container is restarted. With the period: 2 minutes to start.
+    # @section -- 09. Probes
+    failureThreshold: 60
+  liveness:
+    # @schema minimum: 1
+    # -- Seconds between liveness probes.
+    # @section -- 09. Probes
+    periodSeconds: 10
+    # @schema minimum: 1
+    # -- Liveness probes that may fail before the container is restarted.
+    # @section -- 09. Probes
+    failureThreshold: 6
+  readiness:
+    # @schema minimum: 1
+    # -- Seconds between readiness probes.
+    # @section -- 09. Probes
+    periodSeconds: 5
+    # @schema minimum: 1
+    # -- Readiness probes that may fail before the pod is taken out of the Service.
+    # @section -- 09. Probes
+    failureThreshold: 3
+
+tests:
+  # @schema additionalProperties: true
+  # -- Resources of the helm test pods. They peaked at about 140 MiB in CI.
+  # @section -- 10. Tests
+  resources:
+    requests:  # @schema hidden
+      cpu: 50m
+      memory: 128Mi
+    limits:  # @schema hidden
+      memory: 512Mi
+  # @schema additionalProperties: {type: string}
+  # -- Node selector for the `helm test` pods. They run the Shyft image, so on a cluster with arm64 nodes
+  # they need `kubernetes.io/arch: amd64` like the workloads do.
+  # @section -- 10. Tests
+  nodeSelector: {}
+  # -- Tolerations for the `helm test` pods.
+  # @section -- 10. Tests
+  tolerations: []
+  # @schema additionalProperties: true
+  # -- Affinity for the `helm test` pods.
+  # @section -- 10. Tests
+  affinity: {}
+  modelRun:
+    # -- Add a `helm test` that seeds Shyft's demo model and runs it on a drms. It writes demo data into the
+    # databases, so it is off by default: use it in CI and on a fresh install. Needs at least one drms.
+    # @section -- 10. Tests
+    enabled: false

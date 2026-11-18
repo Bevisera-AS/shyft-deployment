@@ -1,0 +1,20 @@
+apiVersion: v2
+name: shyft-hydrology
+description: Shyft hydrology micro-services with a persistent core and scalable drms compute nodes
+type: application
+# The chart's own SemVer, independent of Shyft's. Rules: AGENTS.md, "Versions and releases".
+version: 0.0.1
+# The Shyft image the chart deploys and was tested with: its tag in upstream's registry. Renovate bumps it.
+# renovate: datasource=docker depName=registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app
+appVersion: "37.3.0-1.1"
+# Rendered manifests are validated from this version up. CI installs on 1.34 and 1.37.
+kubeVersion: ">=1.30.0-0"
+home: https://github.com/lazyoldbear/shyft-deployment
+sources:
+  - https://github.com/lazyoldbear/shyft-deployment
+  - https://gitlab.com/shyft-os/shyft
+keywords:
+  - shyft
+  - hydrology
+  - time-series
+  - hpc

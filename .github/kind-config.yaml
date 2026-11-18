@@ -1,0 +1,13 @@
+# Used by `mise run kind-up`. The node image comes from KIND_NODE_IMAGE.
+# Two workers: drms replicas spread across nodes, so registration with task crosses nodes.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  # `mise run kind-up` installs Calico instead of kind's kindnet. kindnet's NetworkPolicy engine needs conntrack
+  # labels in the host kernel. Without them (OrbStack on macOS) it drops the replies to any pod that has an
+  # ingress policy, so drms could never reach task. Calico behaves the same on every host.
+  disableDefaultCNI: true
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker

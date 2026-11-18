@@ -1,0 +1,8 @@
+# The smallest install: no drms, no persistent volume, no NetworkPolicy. Only the read-only test can run.
+drms:
+  replicaCount: 0
+persistence:
+  var:
+    enabled: false
+networkPolicy:
+  enabled: false
