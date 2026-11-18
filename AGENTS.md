@@ -105,7 +105,7 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
 - `values.yaml` comments generate docs and schema. Order matters: `# @schema …` lines first, then `# --`
   description, then `# @section -- NN. Name`.
 - Every default lives in `values.yaml`: Helm validates against the schema but never applies its defaults.
-  No `| default` in templates.
+  No `| default` in templates, except the image tag (see "Versions and releases").
 - The schema is strict (`additionalProperties: false` everywhere, from `.schema.yaml`). Free-form Kubernetes
   maps say `# @schema additionalProperties: true` and hide their default children with `# @schema hidden`;
   lists of Kubernetes objects carry no item type. `tests/schema_test.yaml` shows both directions.
@@ -125,8 +125,10 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
 
 - Values/template change → helm-unittest case in `charts/*/tests/`. With a `[*]` path, `equal` compares each
   match with the value; to pin a whole list, compare the list.
-- New feature → `ci/NN-*-values.yaml` (listed in `ci/README.md`). If it needs more than a values file
-  (existing claims, a restart, a refused connection), a `hack/*-test.sh`.
+- New feature → a values file in `ci/` (listed in `ci/README.md`): prefer adding to `02-non-default-values.yaml`
+  over a new file, since each file is one more install per lane. If it needs more than a values file
+  (existing claims, a restart, a refused connection), a `hack/*-test.sh`, plus its own step in
+  `lint-test.yaml` (`mise run lint` fails without one).
 - Snapshots change only via `mise run snapshot-update`; give the reason in the commit message.
 - `examples/` are kubeconform-only: they need NIRD/cloud resources.
 - A NetworkPolicy test needs a connection that must be refused next to each one that must work
@@ -144,8 +146,9 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
   changelog says what to do). From 1.0.0 on, breaking changes take a major.
 - Chart upgrades keep data (`hack/persistence-test.sh`). Migrating databases between Shyft majors is not the
   chart's job.
-- `appVersion` is that Shyft line, e.g. `"37.3"`. The image tag is pinned in `values.yaml` (`image.tag`, e.g.
-  `37.3.0-1.1`) and is not derived from `appVersion`. Renovate bumps the tag; repository renames
+- `appVersion` is the exact Shyft image tag the chart deploys and was tested with, e.g. `"37.3.0-1.1"`.
+  `image.tag` is empty by default and overrides it (`| default .Chart.AppVersion`, the one exception to "no
+  `| default`": it is Helm's own idiom). Renovate bumps `appVersion` (`# renovate:` comment); repository renames
   (`fedora44-shyft-app` → the next Fedora) are manual.
 - One supported Shyft line at a time. Shyft 28 is not supported: upstream removed its image.
 - `CHANGELOG.md` per chart, Keep a Changelog, headers `## [x.y.z] - YYYY-MM-DD` (`mise run lint` checks). Release

@@ -56,7 +56,7 @@ How the chart sets them:
 - Test pods get `SHYFT_SERVICE_HOST=<core Service>`.
 - Every pod has `enableServiceLinks: false`. Kubernetes would otherwise inject `<SERVICE>_SERVICE_HOST` for
   each Service in the namespace; for a Service named `shyft` that is `SHYFT_SERVICE_HOST`, with the cluster
-  IP in it (**tested**: `ci/03-base-port-22000-values.yaml` names the Service `shyft`).
+  IP in it (**tested**: `ci/02-non-default-values.yaml` names the Service `shyft`).
 - `PYTHONUNBUFFERED=1`: the registration messages below are `print()` calls. Buffered, they would not show
   up in `kubectl logs` until much later.
 

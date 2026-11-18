@@ -73,7 +73,22 @@ jobs:
           version: 2026.11.7
       - run: mise run kind-up
       - run: mise run load-image
-      - run: mise run e2e
+      # What `mise run e2e` does, one step per test, so each shows on its own. `mise run lint` checks that every
+      # hack/*-test.sh has a step here. They all run once ct-install passed, so one failure hides no other.
+      - id: ct
+        run: mise run ct-install
+      - name: hack/drms-test.sh
+        if: ${{ !cancelled() && steps.ct.outcome == 'success' }}
+        run: mise run test drms
+      - name: hack/existing-claims-test.sh
+        if: ${{ !cancelled() && steps.ct.outcome == 'success' }}
+        run: mise run test existing-claims
+      - name: hack/networkpolicy-test.sh
+        if: ${{ !cancelled() && steps.ct.outcome == 'success' }}
+        run: mise run test networkpolicy
+      - name: hack/persistence-test.sh
+        if: ${{ !cancelled() && steps.ct.outcome == 'success' }}
+        run: mise run test persistence
       - name: Diagnostics
         if: failure()
         run: mise run dump

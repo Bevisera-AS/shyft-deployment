@@ -13,7 +13,7 @@ on GitHub yet, and no profile has been tried on a real platform.
 | Topic | Decision |
 |---|---|
 | Repo | Public GitHub `lazyoldbear/shyft-deployment`, default branch `master` |
-| Chart | `charts/shyft-hydrology`. Version: the chart's own SemVer, starting at 0.0.1 (until 2026-11-18 the plan was `<Shyft major>.<Shyft minor>.<n>`, i.e. 37.3.0). `appVersion` = the Shyft line (`37.3`). The image tag is pinned in `values.yaml`, not taken from `appVersion` |
+| Chart | `charts/shyft-hydrology`. Version: the chart's own SemVer, starting at 0.0.1 (until 2026-11-18 the plan was `<Shyft major>.<Shyft minor>.<n>`, i.e. 37.3.0). `appVersion` = the exact Shyft image tag (`37.3.0-1.1`); `image.tag` is empty and overrides it (until 2026-11-19 `appVersion` was the line, `37.3`, and the tag was pinned in `values.yaml`) |
 | Shyft | One line at a time, now 37.3 (`fedora44-shyft-app:37.3.0-1.1`). Shyft 28 is not supported: upstream removed its image |
 | Workloads | `core`: StatefulSet, 1 replica; task, rmd, parameter, state, dtss, dstm, stm, goal_function as containers on localhost, as in upstream's podman pod. `drms`: Deployment, N replicas, one per node preferred. One ClusterIP Service, NetworkPolicy on, no Ingress |
 | Configuration | Shyft's own environment variables. `enableServiceLinks: false`, so Kubernetes cannot inject a `SHYFT_SERVICE_HOST` |
@@ -55,7 +55,7 @@ non-kind contexts (the mise tasks use their own kubeconfig; the rule in CLAUDE.m
       naming, helm tests, schema (bad values must fail), snapshots
 - [x] helm tests: `test-connection` (read-only, every core service through the Service) and, opt-in,
       `test-model-run` (seeds upstream's demo model, runs it through task, a drms and dtss, reads results back)
-- [x] `ci/` scenarios: `00-default`, `01-core-only`, `02-drms-multinode`, `03-base-port-22000`, `04-restricted`
+- [x] `ci/` scenarios: `00-default`, `01-core-only`, `02-non-default` (merged from three on 2026-11-18)
 - [x] `hack/`:
   - `persistence-test.sh`: data survives a pod restart, an upgrade (from `origin/master` once the chart is
     there) and uninstall + reinstall; drms re-registers after task restarts

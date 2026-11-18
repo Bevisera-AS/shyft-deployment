@@ -216,7 +216,7 @@
           "type": "string"
         },
         "tag": {
-          "description": "Shyft image tag. Stay on the Shyft line in the chart's `appVersion`.",
+          "description": "Shyft image tag. Empty: the chart's `appVersion`, the image it was tested with. Set it only to run another build of the same Shyft line.",
           "type": "string"
         }
       },

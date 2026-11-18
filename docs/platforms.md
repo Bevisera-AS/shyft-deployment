@@ -32,7 +32,7 @@ Steps:
      docker://<sigma2 registry>/<project>/fedora44-shyft-app:37.3.0-1.1
    ```
 
-   Keep the tag. Renovate cannot see the mirror, so repeat this when the chart's `image.tag` moves.
+   Keep the tag: it is the chart's `appVersion`. Renovate cannot see the mirror, so repeat this when `appVersion` moves.
 2. **Databases.** Shyft 28 databases are not migrated by this chart. Either start Shyft 37 on an empty
    directory of the `/shyft-var` claim, or migrate with upstream's tools first. Do not point Shyft 37 at the
    Shyft 28 directories.

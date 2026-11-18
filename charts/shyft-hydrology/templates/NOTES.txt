@@ -1,5 +1,5 @@
 {{- $fullname := include "shyft.fullname" . -}}
-Shyft {{ .Values.image.tag }} is starting in namespace {{ .Release.Namespace }}.
+Shyft {{ .Values.image.tag | default .Chart.AppVersion }} is starting in namespace {{ .Release.Namespace }}.
 
 Services, inside the cluster at {{ $fullname }}.{{ .Release.Namespace }}.svc:
 {{- range $service := include "shyft.coreServices" . | fromYamlArray }}

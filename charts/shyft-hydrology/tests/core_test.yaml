@@ -46,6 +46,16 @@ tests:
       - equal: {path: spec.template.spec.enableServiceLinks, value: false}
 
   # The tests set their own image, so that a Shyft bump in values.yaml does not touch them.
+  - it: takes the tag from appVersion by default
+    chart:
+      appVersion: 9.8.7-6.5
+    set:
+      image.repository: registry.example.org/shyft
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="task")].image'
+          value: registry.example.org/shyft:9.8.7-6.5
+
   - it: uses the image from values, by tag
     set:
       image:

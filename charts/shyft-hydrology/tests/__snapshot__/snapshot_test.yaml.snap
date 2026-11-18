@@ -9,7 +9,7 @@ renders the defaults:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-core
     spec:
@@ -28,7 +28,7 @@ renders the defaults:
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: shyft-hydrology
             app.kubernetes.io/part-of: shyft
-            app.kubernetes.io/version: "0.0"
+            app.kubernetes.io/version: snapshot
             helm.sh/chart: shyft-hydrology-0.0.0
         spec:
           automountServiceAccountToken: false
@@ -458,7 +458,7 @@ renders the defaults:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-drms
     spec:
@@ -476,7 +476,7 @@ renders the defaults:
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: shyft-hydrology
             app.kubernetes.io/part-of: shyft
-            app.kubernetes.io/version: "0.0"
+            app.kubernetes.io/version: snapshot
             helm.sh/chart: shyft-hydrology-0.0.0
         spec:
           automountServiceAccountToken: false
@@ -568,7 +568,7 @@ renders the defaults:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-core
     spec:
@@ -619,7 +619,7 @@ renders the defaults:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-drms
     spec:
@@ -650,7 +650,7 @@ renders the defaults:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology
     spec:
@@ -703,7 +703,7 @@ renders the defaults:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology
 renders with every option on:
@@ -717,7 +717,7 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-core
     spec:
@@ -738,7 +738,7 @@ renders with every option on:
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: shyft-hydrology
             app.kubernetes.io/part-of: shyft
-            app.kubernetes.io/version: "0.0"
+            app.kubernetes.io/version: snapshot
             helm.sh/chart: shyft-hydrology-0.0.0
             team: hydrology
         spec:
@@ -1226,7 +1226,7 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-drms
     spec:
@@ -1246,7 +1246,7 @@ renders with every option on:
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: shyft-hydrology
             app.kubernetes.io/part-of: shyft
-            app.kubernetes.io/version: "0.0"
+            app.kubernetes.io/version: snapshot
             helm.sh/chart: shyft-hydrology-0.0.0
             team: hydrology
         spec:
@@ -1362,7 +1362,7 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-drms
     spec:
@@ -1382,7 +1382,7 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-core
     spec:
@@ -1434,7 +1434,7 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology-drms
     spec:
@@ -1467,7 +1467,7 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology
     spec:
@@ -1522,6 +1522,6 @@ renders with every option on:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: shyft-hydrology
         app.kubernetes.io/part-of: shyft
-        app.kubernetes.io/version: "0.0"
+        app.kubernetes.io/version: snapshot
         helm.sh/chart: shyft-hydrology-0.0.0
       name: shyft-hydrology

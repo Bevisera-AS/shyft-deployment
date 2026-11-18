@@ -15,9 +15,10 @@ image:
   # -- Shyft image repository. Sigma2 can only pull from its own registry: mirror the image and set this.
   # @section -- 02. Image
   repository: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app
-  # -- Shyft image tag. Stay on the Shyft line in the chart's `appVersion`.
+  # -- Shyft image tag. Empty: the chart's `appVersion`, the image it was tested with. Set it only to run
+  # another build of the same Shyft line.
   # @section -- 02. Image
-  tag: "37.3.0-1.1"
+  tag: ""
   # @schema pattern: ^(sha256:[a-f0-9]{64})?$
   # -- Optional image digest (`sha256:…`). When set, the image is pulled by digest and the tag is informational.
   # @section -- 02. Image

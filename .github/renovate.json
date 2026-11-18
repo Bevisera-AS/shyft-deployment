@@ -17,6 +17,16 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n[A-Z_]+ = \"(?<currentValue>[^\"]+)\""
       ]
+    },
+    {
+      "customType": "regex",
+      "description": "The Shyft image tag: appVersion in Chart.yaml, marked with a `# renovate:` comment on the line above",
+      "managerFilePatterns": [
+        "/^charts/[^/]+/Chart\\.yaml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\nappVersion: \"(?<currentValue>[^\"]+)\""
+      ]
     }
   ],
   "packageRules": [
@@ -37,7 +47,7 @@
       ]
     },
     {
-      "description": "Shyft image: `image.repository` and `image.tag` in the chart's values.yaml. Its tags (37.3.0-1.1) are not semver.",
+      "description": "Shyft image: `appVersion` in the chart's Chart.yaml (custom manager). Its tags (37.3.0-1.1) are not semver.",
       "matchDepNames": [
         "/shyft-app$/"
       ],
@@ -65,7 +75,7 @@
         "minor"
       ],
       "prBodyNotes": [
-        "New Shyft line. Bump the chart's minor version, set `appVersion` to `<major>.<minor>`, add a `CHANGELOG.md` entry, and run `mise run docs`."
+        "New Shyft line. Bump the chart's minor version, add a `CHANGELOG.md` entry, and run `mise run docs`."
       ]
     }
   ]

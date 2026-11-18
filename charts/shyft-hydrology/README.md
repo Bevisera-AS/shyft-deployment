@@ -1,6 +1,6 @@
 # shyft-hydrology
 
-![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square)  ![AppVersion: 37.3](https://img.shields.io/badge/AppVersion-37.3-informational?style=flat-square)
+![Version: 0.0.1](https://img.shields.io/badge/Version-0.0.1-informational?style=flat-square)  ![AppVersion: 37.3.0-1.1](https://img.shields.io/badge/AppVersion-37.3.0--1.1-informational?style=flat-square)
 
 Shyft hydrology micro-services with a persistent core and scalable drms compute nodes.
 
@@ -128,7 +128,7 @@ the databases. Use it on a fresh install or in CI, not on a system with real dat
 ## Upgrades
 
 The chart version is the chart's own SemVer: 0.0.1 deploys Shyft
-37.3 (`appVersion`). While it is 0.x, a minor version may change values in ways
+37.3.0-1.1 (`appVersion`). While it is 0.x, a minor version may change values in ways
 that need your attention: the changelog says how. A chart upgrade restarts
 the core pod and keeps the data. Moving to another Shyft major may need a database migration that this chart
 does not do: read the Shyft release notes first.
@@ -147,7 +147,7 @@ does not do: read the Shyft release notes first.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | image.repository | string | `"registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app"` | Shyft image repository. Sigma2 can only pull from its own registry: mirror the image and set this. |
-| image.tag | string | `"37.3.0-1.1"` | Shyft image tag. Stay on the Shyft line in the chart's `appVersion`. |
+| image.tag | string | `""` | Shyft image tag. Empty: the chart's `appVersion`, the image it was tested with. Set it only to run another build of the same Shyft line. |
 | image.digest | string | `""` | Optional image digest (`sha256:…`). When set, the image is pulled by digest and the tag is informational. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | imagePullSecrets | list | `[]` | Pull secrets for the image, as a list of `{name: …}`. |

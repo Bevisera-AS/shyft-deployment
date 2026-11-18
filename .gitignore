@@ -14,6 +14,8 @@ charts/*/charts/
 .env
 *.local.yaml
 kubeconfig*
+# `ct install --upgrade` checks out the target branch here while it runs, and removes it afterwards
+/ct-previous-revision*/
 
 # Python (hack/)
 __pycache__/

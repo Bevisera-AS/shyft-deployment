@@ -62,10 +62,11 @@ default
 The Shyft image, by tag or by tag and digest.
 */}}
 {{- define "shyft.image" -}}
+{{- $tag := .Values.image.tag | default .Chart.AppVersion -}}
 {{- if .Values.image.digest -}}
-{{- printf "%s:%s@%s" .Values.image.repository .Values.image.tag .Values.image.digest -}}
+{{- printf "%s:%s@%s" .Values.image.repository $tag .Values.image.digest -}}
 {{- else -}}
-{{- printf "%s:%s" .Values.image.repository .Values.image.tag -}}
+{{- printf "%s:%s" .Values.image.repository $tag -}}
 {{- end -}}
 {{- end }}
 
