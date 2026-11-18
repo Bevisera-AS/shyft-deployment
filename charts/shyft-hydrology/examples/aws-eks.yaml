@@ -1,0 +1,82 @@
+# AWS EKS. Not run on AWS yet: a starting point. Lines marked "yours" are placeholders.
+# Needs: the EBS CSI driver, the AWS Load Balancer Controller, NetworkPolicy enabled in the VPC CNI, and a
+# node group for drms. Sizes follow Sigma2 (examples/sigma2-nird.yaml).
+#
+#   helm install shyft-hydrology shyft/shyft-hydrology -f aws-eks.yaml
+
+core:
+  resources:
+    dtss:
+      requests:
+        cpu: "2"
+        memory: 32Gi
+      limits:
+        memory: 64Gi
+    task:
+      requests:
+        cpu: 500m
+        memory: 4Gi
+      limits:
+        memory: 6Gi
+    rmd: &small
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        memory: 3Gi
+    parameter: *small
+    state: *small
+    stm: *small
+    goal_function: *small
+    # dstm caches up to 10 GiB once it is used: a limit below that gets it killed.
+    dstm:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        memory: 12Gi
+  # The Shyft image is amd64 only.
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+drms:
+  replicaCount: 4
+  resources:
+    requests:
+      cpu: "15"  # a 16 vCPU node keeps about 1 vCPU for the system
+      memory: 56Gi
+    limits:
+      memory: 56Gi
+  # On-demand nodes only. A spot node that disappears leaves its drms registered with task; see the README.
+  nodeSelector:
+    eks.amazonaws.com/nodegroup: shyft-drms  # yours
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: shyft-drms
+      effect: NoSchedule
+  podDisruptionBudget:
+    enabled: true
+
+# `helm test` pods run the same image.
+tests:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+persistence:
+  var:
+    storageClass: gp3  # yours: an EBS CSI class. The core pod stays in the volume's availability zone
+    size: 100Gi
+
+# An internal Network Load Balancer, for clients in the VPC. Drop both blocks to stay on ClusterIP.
+service:
+  type: LoadBalancer
+  cloud: aws
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+networkPolicy:
+  clientPeers:
+    - ipBlock:
+        cidr: 10.0.0.0/16  # yours: the VPC, or the subnets your clients are in

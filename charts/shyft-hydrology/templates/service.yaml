@@ -1,0 +1,27 @@
+{{- $core := dict "root" . "component" "core" -}}
+{{- if eq .Values.service.type "LoadBalancer" }}
+{{- with include "shyft.loadBalancerProblem" . }}
+{{- fail (printf "%s Shyft's protocol has no authentication, so the chart does not render a public load balancer." .) }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "shyft.fullname" . }}
+  labels:
+    {{- include "shyft.labels" $core | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "shyft.selectorLabels" $core | nindent 4 }}
+  ports:
+    {{- range $service := include "shyft.coreServices" . | fromYamlArray }}
+    - name: {{ include "shyft.serviceName" $service }}
+      port: {{ include "shyft.port" (dict "root" $ "service" $service) }}
+      targetPort: {{ include "shyft.serviceName" $service }}
+      protocol: TCP
+    {{- end }}

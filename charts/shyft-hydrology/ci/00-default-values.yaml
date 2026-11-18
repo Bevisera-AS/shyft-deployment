@@ -1,0 +1,4 @@
+# The defaults: chart-created volume, NetworkPolicies on, one drms. Plus the demo model run.
+tests:
+  modelRun:
+    enabled: true

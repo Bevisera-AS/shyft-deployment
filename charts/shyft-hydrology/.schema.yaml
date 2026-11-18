@@ -1,0 +1,12 @@
+# helm-values-schema-json config for `mise run schema`. Annotations: `# @schema …` comments in values.yaml.
+values:
+  - values.yaml
+output: values.schema.json
+# Draft 7 is what every Helm 3 and Helm 4 release can validate.
+draft: 7
+indent: 2
+# Strict: a key that is not in values.yaml is an error. Free-form maps say `additionalProperties: true`.
+noAdditionalProperties: true
+useHelmDocs: true
+schemaRoot:
+  title: shyft-hydrology values

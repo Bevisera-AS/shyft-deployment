@@ -1,0 +1,107 @@
+{{- $fullname := include "shyft.fullname" . -}}
+{{- $core := dict "root" . "component" "core" -}}
+{{- $var := .Values.persistence.var -}}
+{{- $data := .Values.persistence.data -}}
+{{- if and $data.enabled (not $data.existingClaim) }}
+{{- fail "persistence.data.enabled needs persistence.data.existingClaim: the chart does not create the input data claim" }}
+{{- end }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}-core
+  labels:
+    {{- include "shyft.labels" $core | nindent 4 }}
+spec:
+  # One pod is the single writer of every database. Do not scale it.
+  replicas: 1
+  serviceName: {{ $fullname }}
+  selector:
+    matchLabels:
+      {{- include "shyft.selectorLabels" $core | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "shyft.labels" $core | nindent 8 }}
+        {{- with .Values.core.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.core.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "shyft.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      # Service links would inject <SERVICE>_SERVICE_HOST variables. For a Service called "shyft" that is
+      # SHYFT_SERVICE_HOST, which Shyft reads as its own setting.
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.core.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.core.terminationGracePeriodSeconds }}
+      # One container per service, as in upstream's podman pod. They find each other on localhost,
+      # which is Shyft's default host.
+      containers:
+        {{- $env := list
+          (dict "name" "SHYFT_SERVICE_ROOT" "value" "/shyft-var")
+          (dict "name" "SHYFT_SERVICE_INTERFACE" "value" "0.0.0.0") }}
+        {{- range $service := include "shyft.coreServices" . | fromYamlArray }}
+        {{- include "shyft.container" (dict
+          "root" $
+          "service" $service
+          "env" $env
+          "extraEnv" $.Values.core.extraEnv
+          "resources" (get $.Values.core.resources $service)
+          "var" true
+          "data" $data.enabled) | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if not $var.enabled }}
+        - name: var
+          emptyDir: {}
+        {{- else if $var.existingClaim }}
+        - name: var
+          persistentVolumeClaim:
+            claimName: {{ $var.existingClaim }}
+        {{- end }}
+        {{- if $data.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $data.existingClaim }}
+            readOnly: {{ $data.readOnly }}
+        {{- end }}
+      {{- with .Values.core.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.core.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.core.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and $var.enabled (not $var.existingClaim) }}
+  # Immutable once installed: Kubernetes rejects an upgrade that changes anything in here.
+  volumeClaimTemplates:
+    - metadata:
+        name: var
+      spec:
+        accessModes:
+          {{- toYaml $var.accessModes | nindent 10 }}
+        {{- with $var.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $var.size }}
+  {{- end }}

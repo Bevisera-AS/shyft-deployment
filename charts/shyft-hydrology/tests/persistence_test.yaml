@@ -1,0 +1,121 @@
+suite: persistence
+release:
+  name: shyft-hydrology
+  namespace: shyft
+tests:
+  - it: creates the database volume through a volumeClaimTemplate by default
+    template: templates/core-statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates
+          value:
+            - metadata:
+                name: var
+              spec:
+                accessModes: [ReadWriteOnce]
+                resources:
+                  requests:
+                    storage: 10Gi
+      - equal: {path: spec.template.spec.volumes, value: [{name: tmp, emptyDir: {}}]}
+      - contains:
+          path: 'spec.template.spec.containers[?(@.name=="dtss")].volumeMounts'
+          content: {name: var, mountPath: /shyft-var}
+
+  - it: takes size, storage class and access modes for the created claim
+    template: templates/core-statefulset.yaml
+    set:
+      persistence.var:
+        storageClass: gp3
+        size: 100Gi
+        accessModes: [ReadWriteOncePod]
+    asserts:
+      - equal: {path: 'spec.volumeClaimTemplates[0].spec.storageClassName', value: gp3}
+      - equal: {path: 'spec.volumeClaimTemplates[0].spec.resources.requests.storage', value: 100Gi}
+      - equal: {path: 'spec.volumeClaimTemplates[0].spec.accessModes', value: [ReadWriteOncePod]}
+
+  - it: uses an existing claim instead of creating one
+    template: templates/core-statefulset.yaml
+    set:
+      persistence.var.existingClaim: shyft-var
+    asserts:
+      - notExists: {path: spec.volumeClaimTemplates}
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: var
+            persistentVolumeClaim:
+              claimName: shyft-var
+
+  - it: falls back to an emptyDir when persistence is off
+    template: templates/core-statefulset.yaml
+    set:
+      persistence.var.enabled: false
+    asserts:
+      - notExists: {path: spec.volumeClaimTemplates}
+      - contains:
+          path: spec.template.spec.volumes
+          content: {name: var, emptyDir: {}}
+
+  - it: mounts every core container's databases and /tmp, and nothing else by default
+    template: templates/core-statefulset.yaml
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="goal-function")].volumeMounts'
+          value:
+            - {name: tmp, mountPath: /tmp}
+            - {name: var, mountPath: /shyft-var}
+
+  - it: mounts the input data claim into the core containers only
+    set:
+      persistence.data:
+        enabled: true
+        existingClaim: shyft-data
+    asserts:
+      - template: templates/core-statefulset.yaml
+        contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: shyft-data
+              readOnly: false
+      - template: templates/core-statefulset.yaml
+        contains:
+          path: 'spec.template.spec.containers[?(@.name=="task")].volumeMounts'
+          content: {name: data, mountPath: /shyft-data, readOnly: false}
+      - template: templates/drms-deployment.yaml
+        equal: {path: spec.template.spec.volumes, value: [{name: tmp, emptyDir: {}}]}
+
+  - it: mounts the input data into drms too, read-only and elsewhere, when asked
+    set:
+      persistence.data:
+        enabled: true
+        existingClaim: shyft-data
+        mountPath: /data
+        readOnly: true
+        mountInDrms: true
+    asserts:
+      - template: templates/drms-deployment.yaml
+        contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: shyft-data
+              readOnly: true
+      - template: templates/drms-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content: {name: data, mountPath: /data, readOnly: true}
+      - template: templates/core-statefulset.yaml
+        contains:
+          path: 'spec.template.spec.containers[?(@.name=="dtss")].volumeMounts'
+          content: {name: data, mountPath: /data, readOnly: true}
+
+  - it: refuses the input data volume without a claim name
+    template: templates/core-statefulset.yaml
+    set:
+      persistence.data.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: persistence.data.enabled needs persistence.data.existingClaim

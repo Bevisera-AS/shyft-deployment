@@ -1,0 +1,80 @@
+# Sigma2 NIRD: today's setup (Zenodo 17813414, Shyft 28) moved to this chart and Shyft 37.
+# Not run on NIRD yet. Lines marked "yours" are placeholders.
+#
+#   helm install shyft-hydrology shyft/shyft-hydrology -f sigma2-nird.yaml
+
+image:
+  # NIRD pulls only from Sigma2's registry. Mirror registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app
+  # there (docs/platforms.md) and point to the copy.
+  repository: registry.example.sigma2.no/shyft/fedora44-shyft-app  # yours
+imagePullSecrets:
+  - name: sigma2asregistry
+
+shyft:
+  basePort: 22000
+
+core:
+  resources:
+    # Today's shyftdtss deployment: 2 CPU / 32Gi requested, 4 CPU / 64Gi limit.
+    dtss:
+      requests:
+        cpu: "2"
+        memory: 32Gi
+      limits:
+        cpu: "4"
+        memory: 64Gi
+    # Today's shyftservices deployment runs the other seven services in one container with 2 CPU / 16Gi
+    # requested and a 4 CPU / 24Gi limit. Here each service is its own container, so the requests are split.
+    # The memory limits add up to more than 24Gi, because dstm alone caches up to 10 GiB once it is used.
+    task:
+      requests:
+        cpu: 500m
+        memory: 4Gi
+      limits:
+        cpu: "1"
+        memory: 6Gi
+    rmd: &small
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: 500m
+        memory: 3Gi
+    parameter: *small
+    state: *small
+    stm: *small
+    goal_function: *small
+    dstm:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        cpu: 500m
+        memory: 12Gi
+
+drms:
+  replicaCount: 8
+  resources:
+    requests:
+      cpu: "16"
+      memory: 64Gi
+    limits:
+      cpu: "16"
+      memory: 64Gi
+
+persistence:
+  var:
+    existingClaim: shyft-var  # yours: the claim mounted at /shyft-var today
+  data:
+    enabled: true
+    existingClaim: shyft-data  # yours: the claim mounted at /shyft-data today
+
+# The claims are on shared storage that ignores fsGroup: run as the uid and gid that own the directories.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000  # yours
+  runAsGroup: 1000  # yours
+  fsGroup: 1000  # yours
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault

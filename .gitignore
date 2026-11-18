@@ -9,7 +9,7 @@
 charts/*/charts/
 *.tgz
 
-# Local work (make writes renders, dumps, packages here)
+# Local work (the mise tasks write the kind kubeconfig, dumps and caches here)
 .tmp/
 .env
 *.local.yaml

@@ -1,0 +1,8 @@
+# Sigma2's base port. The Service is named "shyft" on purpose: without enableServiceLinks=false Kubernetes
+# would inject SHYFT_SERVICE_HOST=<cluster IP> into every pod, and Shyft reads that variable.
+fullnameOverride: shyft
+shyft:
+  basePort: 22000
+tests:
+  modelRun:
+    enabled: true

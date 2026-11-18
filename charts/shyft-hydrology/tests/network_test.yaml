@@ -1,0 +1,299 @@
+suite: network
+release:
+  name: shyft-hydrology
+  namespace: shyft
+tests:
+  - it: exposes the core services on a ClusterIP Service that selects the core pod
+    template: templates/service.yaml
+    asserts:
+      - isKind: {of: Service}
+      - equal: {path: metadata.name, value: shyft-hydrology}
+      - equal: {path: spec.type, value: ClusterIP}
+      - notExists: {path: metadata.annotations}
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: shyft-hydrology
+            app.kubernetes.io/instance: shyft-hydrology
+            app.kubernetes.io/component: core
+
+  - it: refuses a load balancer without service.cloud
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    asserts:
+      - failedTemplate:
+          errorPattern: needs service.cloud
+
+  # The case the chart cannot catch by itself: on AKS an AWS annotation does nothing, and the load balancer is
+  # public. Naming the cloud makes it catchable.
+  - it: refuses another cloud's internal annotation
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: azure
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    asserts:
+      - failedTemplate:
+          errorPattern: service.cloud=azure needs one of these service.annotations.*azure-load-balancer-internal=true
+
+  - it: refuses a load balancer that is not marked internal
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+    asserts:
+      - failedTemplate:
+          errorPattern: service.cloud=aws needs one of these service.annotations
+
+  - it: refuses a load balancer whose annotations do not concern its exposure
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-type: external
+    asserts:
+      - failedTemplate:
+          errorPattern: service.cloud=aws needs one of these service.annotations
+
+  - it: refuses an explicitly public AWS load balancer
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    asserts:
+      - failedTemplate:
+          errorPattern: aws-load-balancer-scheme=internet-facing. that asks for a public load balancer
+
+  # On AWS the scheme annotation wins over the older "internal" one: this pair is a public load balancer.
+  - it: refuses a public scheme even next to an internal marker
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+          service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    asserts:
+      - failedTemplate:
+          errorPattern: aws-load-balancer-scheme=internet-facing. that asks for a public load balancer
+
+  - it: refuses a public marker of another cloud
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+          service.beta.kubernetes.io/azure-load-balancer-internal: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: azure-load-balancer-internal=false. that asks for a public load balancer
+
+  - it: refuses a marker with the wrong spelling of its value
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: gke
+        annotations:
+          networking.gke.io/load-balancer-type: External
+    asserts:
+      - failedTemplate:
+          errorPattern: load-balancer-type=External. that asks for a public load balancer
+
+  - it: accepts two markers that agree
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+          service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    asserts:
+      - equal: {path: spec.type, value: LoadBalancer}
+
+  - it: accepts the older AWS marker alone
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    asserts:
+      - equal: {path: spec.type, value: LoadBalancer}
+
+  - it: renders an internal AWS load balancer
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    asserts:
+      - equal: {path: spec.type, value: LoadBalancer}
+      - equal:
+          path: 'metadata.annotations["service.beta.kubernetes.io/aws-load-balancer-scheme"]'
+          value: internal
+
+  - it: renders an internal Azure load balancer
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: azure
+        annotations:
+          service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    asserts:
+      - equal: {path: spec.type, value: LoadBalancer}
+
+  - it: renders an internal GKE load balancer
+    template: templates/service.yaml
+    set:
+      service:
+        type: LoadBalancer
+        cloud: gke
+        annotations:
+          networking.gke.io/load-balancer-type: Internal
+    asserts:
+      - equal: {path: spec.type, value: LoadBalancer}
+
+  - it: ignores service.cloud on a ClusterIP Service
+    template: templates/service.yaml
+    set:
+      service.cloud: azure
+    asserts:
+      - equal: {path: spec.type, value: ClusterIP}
+
+  - it: never renders an Ingress
+    asserts:
+      - notMatchRegex:
+          path: kind
+          pattern: ^(Ingress|HTTPRoute|Gateway)$
+
+  - it: lets drms, the test pods and the namespace into core, on ingress only
+    template: templates/networkpolicy.yaml
+    documentSelector: {path: metadata.name, value: shyft-hydrology-core}
+    asserts:
+      - equal: {path: spec.policyTypes, value: [Ingress]}
+      - equal: {path: 'spec.podSelector.matchLabels["app.kubernetes.io/component"]', value: core}
+      - lengthEqual: {path: spec.ingress, count: 1}
+      - equal:
+          path: spec.ingress[0].from
+          value:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: shyft-hydrology
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/component: drms
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: shyft-hydrology
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/component: test
+            - podSelector: {}
+
+  - it: lets only core into drms
+    template: templates/networkpolicy.yaml
+    documentSelector: {path: metadata.name, value: shyft-hydrology-drms}
+    asserts:
+      - equal: {path: spec.policyTypes, value: [Ingress]}
+      - equal: {path: 'spec.podSelector.matchLabels["app.kubernetes.io/component"]', value: drms}
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - podSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: shyft-hydrology
+                      app.kubernetes.io/instance: shyft-hydrology
+                      app.kubernetes.io/component: core
+              ports:
+                - port: 20008
+                  protocol: TCP
+
+  - it: replaces the namespace-wide rule with the given client peers
+    template: templates/networkpolicy.yaml
+    documentSelector: {path: metadata.name, value: shyft-hydrology-core}
+    set:
+      networkPolicy:
+        allowNamespace: false
+        clientPeers:
+          - podSelector:
+              matchLabels:
+                shyft-client: "true"
+          - ipBlock:
+              cidr: 10.0.0.0/16
+    asserts:
+      - lengthEqual: {path: 'spec.ingress[0].from', count: 4}
+      - notContains:
+          path: spec.ingress[0].from
+          content: {podSelector: {}}
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            podSelector:
+              matchLabels:
+                shyft-client: "true"
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            ipBlock:
+              cidr: 10.0.0.0/16
+
+  - it: creates no NetworkPolicy when disabled
+    template: templates/networkpolicy.yaml
+    set:
+      networkPolicy.enabled: false
+    asserts:
+      - hasDocuments: {count: 0}
+
+  - it: says in the install notes that the load balancer was only asked to be internal, and how to check
+    template: templates/NOTES.txt
+    set:
+      service:
+        type: LoadBalancer
+        cloud: aws
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    asserts:
+      - matchRegexRaw:
+          pattern: asked to be internal with the annotation for service.cloud=aws
+      - matchRegexRaw:
+          pattern: "kubectl --namespace shyft get service shyft-hydrology -o jsonpath='\\{.status.loadBalancer.ingress\\}'"
+      - matchRegexRaw:
+          pattern: "On AWS that is a DNS hostname. The load balancer behind it must have the Scheme \"internal\""
+      - matchRegexRaw:
+          pattern: aws elbv2 describe-load-balancers
+      - notMatchRegexRaw:
+          pattern: The Service is an internal load balancer
+
+  - it: on Azure and GKE, tells the operator to check for a private IP address instead
+    template: templates/NOTES.txt
+    set:
+      service:
+        type: LoadBalancer
+        cloud: azure
+        annotations:
+          service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    asserts:
+      - matchRegexRaw:
+          pattern: That is an IP address. It must be an address of your private network
+      - notMatchRegexRaw:
+          pattern: aws elbv2

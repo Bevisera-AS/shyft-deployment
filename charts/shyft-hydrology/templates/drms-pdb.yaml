@@ -1,0 +1,14 @@
+{{- if and .Values.drms.podDisruptionBudget.enabled (gt (int .Values.drms.replicaCount) 0) }}
+{{- $drms := dict "root" . "component" "drms" -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "shyft.fullname" . }}-drms
+  labels:
+    {{- include "shyft.labels" $drms | nindent 4 }}
+spec:
+  maxUnavailable: {{ .Values.drms.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "shyft.selectorLabels" $drms | nindent 6 }}
+{{- end }}

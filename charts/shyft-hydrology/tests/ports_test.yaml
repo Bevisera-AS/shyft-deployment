@@ -1,0 +1,104 @@
+suite: ports
+# Port = basePort + 2·rel, with rel fixed by Shyft. basePort + 2·rel + 1 (the web port) is never used.
+release:
+  name: shyft-hydrology
+  namespace: shyft
+tests:
+  - it: gives every core service its port at the default base
+    template: templates/core-statefulset.yaml
+    asserts:
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="task")].ports[0].containerPort', value: 20000}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="rmd")].ports[0].containerPort', value: 20002}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="parameter")].ports[0].containerPort', value: 20004}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="state")].ports[0].containerPort', value: 20006}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="dtss")].ports[0].containerPort', value: 20010}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="dstm")].ports[0].containerPort', value: 20012}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="stm")].ports[0].containerPort', value: 20014}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="goal-function")].ports[0].containerPort', value: 20016}
+
+  - it: gives drms the port between state and dtss
+    template: templates/drms-deployment.yaml
+    asserts:
+      - equal: {path: 'spec.template.spec.containers[0].ports[0].containerPort', value: 20008}
+
+  - it: moves every port with the base port
+    set:
+      shyft.basePort: 22000
+    asserts:
+      - template: templates/core-statefulset.yaml
+        equal: {path: 'spec.template.spec.containers[?(@.name=="task")].ports[0].containerPort', value: 22000}
+      - template: templates/core-statefulset.yaml
+        equal: {path: 'spec.template.spec.containers[?(@.name=="goal-function")].ports[0].containerPort', value: 22016}
+      - template: templates/core-statefulset.yaml
+        contains:
+          path: 'spec.template.spec.containers[?(@.name=="dtss")].env'
+          content: {name: SHYFT_SERVICE_BASE_PORT, value: "22000"}
+      - template: templates/drms-deployment.yaml
+        equal: {path: 'spec.template.spec.containers[0].ports[0].containerPort', value: 22008}
+      - template: templates/drms-deployment.yaml
+        contains:
+          path: 'spec.template.spec.containers[0].env'
+          content: {name: SHYFT_SERVICE_BASE_PORT, value: "22000"}
+      - template: templates/service.yaml
+        equal: {path: 'spec.ports[?(@.name=="dtss")].port', value: 22010}
+      - template: templates/networkpolicy.yaml
+        documentSelector: {path: metadata.name, value: shyft-hydrology-drms}
+        equal: {path: 'spec.ingress[0].ports[0].port', value: 22008}
+      - template: templates/tests/test-connection.yaml
+        contains:
+          path: 'spec.containers[0].env'
+          content: {name: SHYFT_SERVICE_BASE_PORT, value: "22000"}
+
+  - it: exposes exactly the eight core services, by name, and not drms
+    template: templates/service.yaml
+    asserts:
+      - equal:
+          path: spec.ports
+          value:
+            - {name: task, port: 20000, targetPort: task, protocol: TCP}
+            - {name: rmd, port: 20002, targetPort: rmd, protocol: TCP}
+            - {name: parameter, port: 20004, targetPort: parameter, protocol: TCP}
+            - {name: state, port: 20006, targetPort: state, protocol: TCP}
+            - {name: dtss, port: 20010, targetPort: dtss, protocol: TCP}
+            - {name: dstm, port: 20012, targetPort: dstm, protocol: TCP}
+            - {name: stm, port: 20014, targetPort: stm, protocol: TCP}
+            - {name: goal-function, port: 20016, targetPort: goal-function, protocol: TCP}
+
+  - it: opens the same eight ports in the core NetworkPolicy
+    template: templates/networkpolicy.yaml
+    documentSelector: {path: metadata.name, value: shyft-hydrology-core}
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports
+          value:
+            - {port: 20000, protocol: TCP}
+            - {port: 20002, protocol: TCP}
+            - {port: 20004, protocol: TCP}
+            - {port: 20006, protocol: TCP}
+            - {port: 20010, protocol: TCP}
+            - {port: 20012, protocol: TCP}
+            - {port: 20014, protocol: TCP}
+            - {port: 20016, protocol: TCP}
+
+  - it: probes every container on its own port, over TCP
+    template: templates/core-statefulset.yaml
+    asserts:
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="dtss")].startupProbe.tcpSocket.port', value: dtss}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="dtss")].livenessProbe.tcpSocket.port', value: dtss}
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="dtss")].readinessProbe.tcpSocket.port', value: dtss}
+      - notExists: {path: 'spec.template.spec.containers[?(@.name=="dtss")].livenessProbe.httpGet'}
+
+  - it: takes probe timing from values
+    template: templates/drms-deployment.yaml
+    set:
+      probes:
+        startup: {periodSeconds: 3, failureThreshold: 100}
+        liveness: {periodSeconds: 20, failureThreshold: 4}
+        readiness: {periodSeconds: 7, failureThreshold: 2}
+    asserts:
+      - equal: {path: 'spec.template.spec.containers[0].startupProbe.periodSeconds', value: 3}
+      - equal: {path: 'spec.template.spec.containers[0].startupProbe.failureThreshold', value: 100}
+      - equal: {path: 'spec.template.spec.containers[0].livenessProbe.periodSeconds', value: 20}
+      - equal: {path: 'spec.template.spec.containers[0].livenessProbe.failureThreshold', value: 4}
+      - equal: {path: 'spec.template.spec.containers[0].readinessProbe.periodSeconds', value: 7}
+      - equal: {path: 'spec.template.spec.containers[0].readinessProbe.failureThreshold', value: 2}

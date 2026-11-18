@@ -1,0 +1,117 @@
+suite: security
+release:
+  name: shyft-hydrology
+  namespace: shyft
+tests:
+  - it: runs every pod as the image's user, with no token and the default seccomp profile
+    templates:
+      - templates/core-statefulset.yaml
+      - templates/drms-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext
+          value:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+      - equal: {path: spec.template.spec.automountServiceAccountToken, value: false}
+      - equal: {path: spec.template.spec.serviceAccountName, value: shyft-hydrology}
+
+  - it: locks down every service container
+    templates:
+      - templates/core-statefulset.yaml
+      - templates/drms-deployment.yaml
+    asserts:
+      # With [*], each container is compared with the value.
+      - equal:
+          path: spec.template.spec.containers[*].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+
+  - it: locks down the test pods the same way
+    templates:
+      - templates/tests/test-connection.yaml
+      - templates/tests/test-model-run.yaml
+    set:
+      tests.modelRun.enabled: true
+    asserts:
+      - equal: {path: spec.securityContext.runAsUser, value: 1000}
+      - equal: {path: 'spec.containers[0].securityContext.readOnlyRootFilesystem', value: true}
+      - equal: {path: 'spec.containers[0].securityContext.capabilities.drop', value: [ALL]}
+      - equal: {path: spec.automountServiceAccountToken, value: false}
+      - equal: {path: spec.enableServiceLinks, value: false}
+
+  - it: gives every container a writable /tmp despite the read-only root
+    templates:
+      - templates/core-statefulset.yaml
+      - templates/drms-deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content: {name: tmp, emptyDir: {}}
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content: {name: tmp, mountPath: /tmp}
+
+  - it: takes another user for storage that ignores fsGroup
+    templates:
+      - templates/core-statefulset.yaml
+      - templates/drms-deployment.yaml
+    set:
+      podSecurityContext:
+        runAsUser: 12345
+        runAsGroup: 12345
+        fsGroup: 12345
+      securityContext:
+        readOnlyRootFilesystem: false
+    asserts:
+      - equal: {path: spec.template.spec.securityContext.runAsUser, value: 12345}
+      - equal: {path: spec.template.spec.securityContext.runAsNonRoot, value: true}
+      - equal: {path: 'spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem', value: false}
+      - equal: {path: 'spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation', value: false}
+
+  - it: creates a ServiceAccount that mounts no token
+    template: templates/serviceaccount.yaml
+    asserts:
+      - isKind: {of: ServiceAccount}
+      - equal: {path: metadata.name, value: shyft-hydrology}
+      - equal: {path: automountServiceAccountToken, value: false}
+      - notExists: {path: metadata.annotations}
+
+  - it: names and annotates the ServiceAccount
+    set:
+      serviceAccount:
+        name: shyft
+        annotations: {example.org/role: none}
+    asserts:
+      - template: templates/serviceaccount.yaml
+        equal: {path: metadata.name, value: shyft}
+      - template: templates/serviceaccount.yaml
+        equal: {path: 'metadata.annotations["example.org/role"]', value: none}
+      - template: templates/core-statefulset.yaml
+        equal: {path: spec.template.spec.serviceAccountName, value: shyft}
+
+  - it: uses the default ServiceAccount when it creates none
+    set:
+      serviceAccount.create: false
+    asserts:
+      - template: templates/serviceaccount.yaml
+        hasDocuments: {count: 0}
+      - template: templates/drms-deployment.yaml
+        equal: {path: spec.template.spec.serviceAccountName, value: default}
+
+  - it: uses an existing ServiceAccount by name
+    set:
+      serviceAccount:
+        create: false
+        name: existing
+    asserts:
+      - template: templates/core-statefulset.yaml
+        equal: {path: spec.template.spec.serviceAccountName, value: existing}

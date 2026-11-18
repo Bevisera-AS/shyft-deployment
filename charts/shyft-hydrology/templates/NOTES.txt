@@ -1,0 +1,52 @@
+{{- $fullname := include "shyft.fullname" . -}}
+Shyft {{ .Values.image.tag }} is starting in namespace {{ .Release.Namespace }}.
+
+Services, inside the cluster at {{ $fullname }}.{{ .Release.Namespace }}.svc:
+{{- range $service := include "shyft.coreServices" . | fromYamlArray }}
+  {{ printf "%-14s %s" $service (include "shyft.port" (dict "root" $ "service" $service)) }}
+{{- end }}
+{{- if gt (int .Values.drms.replicaCount) 0 }}
+drms: {{ .Values.drms.replicaCount }} compute node(s). They register with task themselves; scale with drms.replicaCount.
+{{- else }}
+drms: none (drms.replicaCount is 0), so task cannot run models.
+{{- end }}
+
+Check that every service answers:
+
+  helm test {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+
+Connect from a pod in the cluster. Shyft's Python clients read these two variables:
+
+  SHYFT_SERVICE_HOST={{ $fullname }}.{{ .Release.Namespace }}.svc
+  SHYFT_SERVICE_BASE_PORT={{ .Values.shyft.basePort | int }}
+
+Connect from your machine. There is no Ingress: the protocol is binary and has no authentication.
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ $fullname }}
+  {{- range $service := include "shyft.coreServices" . | fromYamlArray }} {{ include "shyft.port" (dict "root" $ "service" $service) }}{{ end }}
+
+  then use host localhost and base port {{ .Values.shyft.basePort | int }}.
+{{- if not .Values.persistence.var.enabled }}
+
+WARNING: persistence.var.enabled is false. The databases are in an emptyDir and are lost when the pod goes.
+{{- end }}
+{{- if eq .Values.service.type "LoadBalancer" }}
+
+The Service is a load balancer, asked to be internal with the annotation for service.cloud={{ .Values.service.cloud }}.
+The chart cannot see which cloud this cluster really runs in. Before you rely on it, look at its address:
+
+  kubectl --namespace {{ .Release.Namespace }} get service {{ $fullname }} -o jsonpath='{.status.loadBalancer.ingress}'
+{{- if eq .Values.service.cloud "aws" }}
+
+On AWS that is a DNS hostname. The load balancer behind it must have the Scheme "internal":
+
+  aws elbv2 describe-load-balancers --query "LoadBalancers[?DNSName=='<hostname>'].Scheme" --output text
+
+For a Classic Load Balancer: aws elb describe-load-balancers, with LoadBalancerDescriptions in the query.
+{{- else }}
+
+That is an IP address. It must be an address of your private network, not a public one.
+{{- end }}
+
+Anyone who can reach it can read and write every database.
+{{- end }}

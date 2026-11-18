@@ -1,0 +1,127 @@
+suite: core
+templates:
+  - templates/core-statefulset.yaml
+release:
+  name: shyft-hydrology
+  namespace: shyft
+tests:
+  - it: is one StatefulSet pod governed by the Service
+    asserts:
+      - isKind: {of: StatefulSet}
+      - equal: {path: metadata.name, value: shyft-hydrology-core}
+      - equal: {path: spec.replicas, value: 1}
+      - equal: {path: spec.serviceName, value: shyft-hydrology}
+
+  - it: runs the eight services, one container and one upstream script each
+    asserts:
+      - lengthEqual: {path: spec.template.spec.containers, count: 8}
+      - equal: {path: 'spec.template.spec.containers[0].name', value: task}
+      - equal: {path: 'spec.template.spec.containers[1].name', value: rmd}
+      - equal: {path: 'spec.template.spec.containers[2].name', value: parameter}
+      - equal: {path: 'spec.template.spec.containers[3].name', value: state}
+      - equal: {path: 'spec.template.spec.containers[4].name', value: dtss}
+      - equal: {path: 'spec.template.spec.containers[5].name', value: dstm}
+      - equal: {path: 'spec.template.spec.containers[6].name', value: stm}
+      - equal: {path: 'spec.template.spec.containers[7].name', value: goal-function}
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="rmd")].command'
+          value: [python3, /opt/shyft/hydrology/service/rmd.py]
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="goal-function")].command'
+          value: [python3, /opt/shyft/hydrology/service/goal_function.py]
+      - notExists: {path: 'spec.template.spec.containers[?(@.name=="task")].args'}
+
+  - it: configures the services through Shyft's environment variables
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="task")].env'
+          value:
+            - {name: PYTHONUNBUFFERED, value: "1"}
+            - {name: SHYFT_SERVICE_BASE_PORT, value: "20000"}
+            - {name: SHYFT_SERVICE_ROOT, value: /shyft-var}
+            - {name: SHYFT_SERVICE_INTERFACE, value: 0.0.0.0}
+
+  - it: keeps Kubernetes from injecting SHYFT_SERVICE_HOST for a Service named shyft
+    asserts:
+      - equal: {path: spec.template.spec.enableServiceLinks, value: false}
+
+  # The tests set their own image, so that a Shyft bump in values.yaml does not touch them.
+  - it: uses the image from values, by tag
+    set:
+      image:
+        repository: registry.example.org/shyft
+        tag: 1.2.3-4.5
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="task")].image'
+          value: registry.example.org/shyft:1.2.3-4.5
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="task")].imagePullPolicy', value: IfNotPresent}
+
+  - it: pulls by digest when one is given
+    set:
+      image:
+        repository: registry.example.org/shyft
+        tag: 1.2.3-4.5
+        digest: sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+        pullPolicy: Always
+      imagePullSecrets:
+        - name: regcred
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="dtss")].image'
+          value: registry.example.org/shyft:1.2.3-4.5@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+      - equal: {path: 'spec.template.spec.containers[?(@.name=="dtss")].imagePullPolicy', value: Always}
+      - equal: {path: spec.template.spec.imagePullSecrets, value: [{name: regcred}]}
+
+  - it: sizes each service on its own
+    set:
+      core.resources.dtss:
+        requests: {cpu: "2", memory: 32Gi}
+        limits: {memory: 64Gi}
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="dtss")].resources'
+          value:
+            requests: {cpu: "2", memory: 32Gi}
+            limits: {memory: 64Gi}
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="task")].resources'
+          value:
+            requests: {cpu: 100m, memory: 256Mi}
+
+  - it: passes pod metadata, extra env and scheduling through
+    set:
+      core:
+        extraEnv:
+          - {name: TZ, value: UTC}
+        podAnnotations: {example.org/a: "1"}
+        podLabels: {team: hydrology}
+        nodeSelector: {disk: ssd}
+        tolerations:
+          - {key: dedicated, operator: Exists}
+        affinity:
+          nodeAffinity: {}
+        priorityClassName: high
+        terminationGracePeriodSeconds: 120
+    asserts:
+      - contains:
+          path: 'spec.template.spec.containers[?(@.name=="stm")].env'
+          content: {name: TZ, value: UTC}
+      - equal: {path: 'spec.template.metadata.annotations["example.org/a"]', value: "1"}
+      - equal: {path: spec.template.metadata.labels.team, value: hydrology}
+      - equal: {path: spec.template.spec.nodeSelector, value: {disk: ssd}}
+      - equal: {path: spec.template.spec.tolerations, value: [{key: dedicated, operator: Exists}]}
+      - exists: {path: spec.template.spec.affinity.nodeAffinity}
+      - equal: {path: spec.template.spec.priorityClassName, value: high}
+      - equal: {path: spec.template.spec.terminationGracePeriodSeconds, value: 120}
+
+  - it: keeps the selector to the three immutable labels
+    set:
+      core.podLabels: {team: hydrology}
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: shyft-hydrology
+            app.kubernetes.io/instance: shyft-hydrology
+            app.kubernetes.io/component: core

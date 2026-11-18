@@ -1,0 +1,80 @@
+# Azure AKS. Not run on Azure yet: a starting point. Lines marked "yours" are placeholders.
+# Needs: a network policy engine on the cluster (Cilium, Calico or Azure), and a node pool for drms.
+# Sizes follow Sigma2 (examples/sigma2-nird.yaml).
+#
+#   helm install shyft-hydrology shyft/shyft-hydrology -f azure-aks.yaml
+
+core:
+  resources:
+    dtss:
+      requests:
+        cpu: "2"
+        memory: 32Gi
+      limits:
+        memory: 64Gi
+    task:
+      requests:
+        cpu: 500m
+        memory: 4Gi
+      limits:
+        memory: 6Gi
+    rmd: &small
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        memory: 3Gi
+    parameter: *small
+    state: *small
+    stm: *small
+    goal_function: *small
+    # dstm caches up to 10 GiB once it is used: a limit below that gets it killed.
+    dstm:
+      requests:
+        cpu: 250m
+        memory: 2Gi
+      limits:
+        memory: 12Gi
+  # The Shyft image is amd64 only.
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+drms:
+  replicaCount: 4
+  resources:
+    requests:
+      cpu: "15"  # a 16 vCPU node keeps about 1 vCPU for the system
+      memory: 56Gi
+    limits:
+      memory: 56Gi
+  # Regular nodes only. A spot node that disappears leaves its drms registered with task; see the README.
+  nodeSelector:
+    kubernetes.azure.com/agentpool: drms  # yours
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: shyft-drms
+      effect: NoSchedule
+  podDisruptionBudget:
+    enabled: true
+
+# `helm test` pods run the same image.
+tests:
+  nodeSelector:
+    kubernetes.io/arch: amd64
+
+persistence:
+  var:
+    storageClass: managed-csi-premium  # the core pod stays in the disk's zone
+    size: 100Gi
+
+# An internal Azure Load Balancer, for clients in the virtual network. Drop both blocks to stay on ClusterIP.
+service:
+  type: LoadBalancer
+  cloud: azure
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+networkPolicy:
+  clientPeers:
+    - ipBlock:
+        cidr: 10.224.0.0/12  # yours: the virtual network, or the subnets your clients are in

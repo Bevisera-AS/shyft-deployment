@@ -1,0 +1,1527 @@
+renders the defaults:
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-core
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: core
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      serviceName: shyft-hydrology
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: core
+            app.kubernetes.io/instance: shyft-hydrology
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: shyft-hydrology
+            app.kubernetes.io/part-of: shyft
+            app.kubernetes.io/version: "0.0"
+            helm.sh/chart: shyft-hydrology-0.0.0
+        spec:
+          automountServiceAccountToken: false
+          containers:
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/task.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: task
+              name: task
+              ports:
+                - containerPort: 20000
+                  name: task
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: task
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: task
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/rmd.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: rmd
+              name: rmd
+              ports:
+                - containerPort: 20002
+                  name: rmd
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: rmd
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: rmd
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/parameter.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: parameter
+              name: parameter
+              ports:
+                - containerPort: 20004
+                  name: parameter
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: parameter
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: parameter
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/state.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: state
+              name: state
+              ports:
+                - containerPort: 20006
+                  name: state
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: state
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: state
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/dtss.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: dtss
+              name: dtss
+              ports:
+                - containerPort: 20010
+                  name: dtss
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: dtss
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: dtss
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/dstm.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: dstm
+              name: dstm
+              ports:
+                - containerPort: 20012
+                  name: dstm
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: dstm
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: dstm
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/stm.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: stm
+              name: stm
+              ports:
+                - containerPort: 20014
+                  name: stm
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: stm
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: stm
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/goal_function.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: goal-function
+              name: goal-function
+              ports:
+                - containerPort: 20016
+                  name: goal-function
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: goal-function
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: goal-function
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+          enableServiceLinks: false
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: shyft-hydrology
+          terminationGracePeriodSeconds: 60
+          volumes:
+            - emptyDir: {}
+              name: tmp
+      volumeClaimTemplates:
+        - metadata:
+            name: var
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: drms
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-drms
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: drms
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: drms
+            app.kubernetes.io/instance: shyft-hydrology
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: shyft-hydrology
+            app.kubernetes.io/part-of: shyft
+            app.kubernetes.io/version: "0.0"
+            helm.sh/chart: shyft-hydrology-0.0.0
+        spec:
+          automountServiceAccountToken: false
+          containers:
+            - args:
+                - --interface
+                - $(POD_IP)
+                - --host
+                - shyft-hydrology
+                - --root-dir
+                - /tmp
+              command:
+                - python3
+                - /opt/shyft/hydrology/service/drms.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "20000"
+                - name: POD_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+              image: registry.gitlab.com/shyft-os/shyft/fedora44-shyft-app:snapshot
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: drms
+              name: drms
+              ports:
+                - containerPort: 20008
+                  name: drms
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: drms
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: drms
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+          enableServiceLinks: false
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: shyft-hydrology
+          terminationGracePeriodSeconds: 30
+          topologySpreadConstraints:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: drms
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+              maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+          volumes:
+            - emptyDir: {}
+              name: tmp
+  3: |
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-core
+    spec:
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/component: drms
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/component: test
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+            - podSelector: {}
+          ports:
+            - port: 20000
+              protocol: TCP
+            - port: 20002
+              protocol: TCP
+            - port: 20004
+              protocol: TCP
+            - port: 20006
+              protocol: TCP
+            - port: 20010
+              protocol: TCP
+            - port: 20012
+              protocol: TCP
+            - port: 20014
+              protocol: TCP
+            - port: 20016
+              protocol: TCP
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: core
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      policyTypes:
+        - Ingress
+  4: |
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: drms
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-drms
+    spec:
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/component: core
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+          ports:
+            - port: 20008
+              protocol: TCP
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: drms
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      policyTypes:
+        - Ingress
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology
+    spec:
+      ports:
+        - name: task
+          port: 20000
+          protocol: TCP
+          targetPort: task
+        - name: rmd
+          port: 20002
+          protocol: TCP
+          targetPort: rmd
+        - name: parameter
+          port: 20004
+          protocol: TCP
+          targetPort: parameter
+        - name: state
+          port: 20006
+          protocol: TCP
+          targetPort: state
+        - name: dtss
+          port: 20010
+          protocol: TCP
+          targetPort: dtss
+        - name: dstm
+          port: 20012
+          protocol: TCP
+          targetPort: dstm
+        - name: stm
+          port: 20014
+          protocol: TCP
+          targetPort: stm
+        - name: goal-function
+          port: 20016
+          protocol: TCP
+          targetPort: goal-function
+      selector:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/name: shyft-hydrology
+      type: ClusterIP
+  6: |
+    apiVersion: v1
+    automountServiceAccountToken: false
+    kind: ServiceAccount
+    metadata:
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology
+renders with every option on:
+  1: |
+    apiVersion: apps/v1
+    kind: StatefulSet
+    metadata:
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-core
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: core
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      serviceName: shyft-hydrology
+      template:
+        metadata:
+          annotations:
+            example.org/owner: hydrology
+          labels:
+            app.kubernetes.io/component: core
+            app.kubernetes.io/instance: shyft-hydrology
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: shyft-hydrology
+            app.kubernetes.io/part-of: shyft
+            app.kubernetes.io/version: "0.0"
+            helm.sh/chart: shyft-hydrology-0.0.0
+            team: hydrology
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: pool
+                        operator: In
+                        values:
+                          - core
+          automountServiceAccountToken: false
+          containers:
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/task.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: task
+              name: task
+              ports:
+                - containerPort: 22000
+                  name: task
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: task
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: task
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/rmd.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: rmd
+              name: rmd
+              ports:
+                - containerPort: 22002
+                  name: rmd
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: rmd
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: rmd
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/parameter.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: parameter
+              name: parameter
+              ports:
+                - containerPort: 22004
+                  name: parameter
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: parameter
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: parameter
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/state.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: state
+              name: state
+              ports:
+                - containerPort: 22006
+                  name: state
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: state
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: state
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/dtss.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: dtss
+              name: dtss
+              ports:
+                - containerPort: 22010
+                  name: dtss
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: dtss
+              resources:
+                limits:
+                  memory: 64Gi
+                requests:
+                  cpu: "2"
+                  memory: 32Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: dtss
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/dstm.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: dstm
+              name: dstm
+              ports:
+                - containerPort: 22012
+                  name: dstm
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: dstm
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: dstm
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/stm.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: stm
+              name: stm
+              ports:
+                - containerPort: 22014
+                  name: stm
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: stm
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: stm
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+            - command:
+                - python3
+                - /opt/shyft/hydrology/service/goal_function.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: SHYFT_SERVICE_ROOT
+                  value: /shyft-var
+                - name: SHYFT_SERVICE_INTERFACE
+                  value: 0.0.0.0
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: goal-function
+              name: goal-function
+              ports:
+                - containerPort: 22016
+                  name: goal-function
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: goal-function
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 256Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: goal-function
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-var
+                  name: var
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+          enableServiceLinks: false
+          imagePullSecrets:
+            - name: regcred
+          nodeSelector:
+            pool: core
+          priorityClassName: high
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: shyft-hydrology
+          terminationGracePeriodSeconds: 120
+          tolerations:
+            - key: dedicated
+              operator: Exists
+          volumes:
+            - emptyDir: {}
+              name: tmp
+            - name: var
+              persistentVolumeClaim:
+                claimName: shyft-var
+            - name: data
+              persistentVolumeClaim:
+                claimName: shyft-data
+                readOnly: true
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: drms
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-drms
+    spec:
+      replicas: 8
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: drms
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      template:
+        metadata:
+          annotations:
+            example.org/owner: hydrology
+          labels:
+            app.kubernetes.io/component: drms
+            app.kubernetes.io/instance: shyft-hydrology
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: shyft-hydrology
+            app.kubernetes.io/part-of: shyft
+            app.kubernetes.io/version: "0.0"
+            helm.sh/chart: shyft-hydrology-0.0.0
+            team: hydrology
+        spec:
+          automountServiceAccountToken: false
+          containers:
+            - args:
+                - --interface
+                - $(POD_IP)
+                - --host
+                - shyft-hydrology
+                - --root-dir
+                - /tmp
+              command:
+                - python3
+                - /opt/shyft/hydrology/service/drms.py
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: SHYFT_SERVICE_BASE_PORT
+                  value: "22000"
+                - name: POD_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+                - name: TZ
+                  value: UTC
+              image: registry.example.org/shyft/fedora44-shyft-app:snapshot@sha256:5cf8df47518e66664ba7b7f309d973fd5e0fc9e052829d38fa3a0d0bceec752f
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 6
+                periodSeconds: 10
+                tcpSocket:
+                  port: drms
+              name: drms
+              ports:
+                - containerPort: 22008
+                  name: drms
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                periodSeconds: 5
+                tcpSocket:
+                  port: drms
+              resources:
+                limits:
+                  cpu: "16"
+                  memory: 64Gi
+                requests:
+                  cpu: "16"
+                  memory: 64Gi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+              startupProbe:
+                failureThreshold: 60
+                periodSeconds: 2
+                tcpSocket:
+                  port: drms
+              volumeMounts:
+                - mountPath: /tmp
+                  name: tmp
+                - mountPath: /shyft-data
+                  name: data
+                  readOnly: true
+          enableServiceLinks: false
+          imagePullSecrets:
+            - name: regcred
+          nodeSelector:
+            pool: drms
+          priorityClassName: low
+          securityContext:
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: shyft-hydrology
+          terminationGracePeriodSeconds: 30
+          tolerations:
+            - key: dedicated
+              operator: Exists
+          topologySpreadConstraints:
+            - labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: drms
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+              maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: ScheduleAnyway
+            - maxSkew: 2
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: ScheduleAnyway
+          volumes:
+            - emptyDir: {}
+              name: tmp
+            - name: data
+              persistentVolumeClaim:
+                claimName: shyft-data
+                readOnly: true
+  3: |
+    apiVersion: policy/v1
+    kind: PodDisruptionBudget
+    metadata:
+      labels:
+        app.kubernetes.io/component: drms
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-drms
+    spec:
+      maxUnavailable: 1
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: drms
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+  4: |
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-core
+    spec:
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/component: drms
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/component: test
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+            - ipBlock:
+                cidr: 10.0.0.0/16
+          ports:
+            - port: 22000
+              protocol: TCP
+            - port: 22002
+              protocol: TCP
+            - port: 22004
+              protocol: TCP
+            - port: 22006
+              protocol: TCP
+            - port: 22010
+              protocol: TCP
+            - port: 22012
+              protocol: TCP
+            - port: 22014
+              protocol: TCP
+            - port: 22016
+              protocol: TCP
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: core
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      policyTypes:
+        - Ingress
+  5: |
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: drms
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology-drms
+    spec:
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app.kubernetes.io/component: core
+                  app.kubernetes.io/instance: shyft-hydrology
+                  app.kubernetes.io/name: shyft-hydrology
+          ports:
+            - port: 22008
+              protocol: TCP
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/component: drms
+          app.kubernetes.io/instance: shyft-hydrology
+          app.kubernetes.io/name: shyft-hydrology
+      policyTypes:
+        - Ingress
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology
+    spec:
+      ports:
+        - name: task
+          port: 22000
+          protocol: TCP
+          targetPort: task
+        - name: rmd
+          port: 22002
+          protocol: TCP
+          targetPort: rmd
+        - name: parameter
+          port: 22004
+          protocol: TCP
+          targetPort: parameter
+        - name: state
+          port: 22006
+          protocol: TCP
+          targetPort: state
+        - name: dtss
+          port: 22010
+          protocol: TCP
+          targetPort: dtss
+        - name: dstm
+          port: 22012
+          protocol: TCP
+          targetPort: dstm
+        - name: stm
+          port: 22014
+          protocol: TCP
+          targetPort: stm
+        - name: goal-function
+          port: 22016
+          protocol: TCP
+          targetPort: goal-function
+      selector:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/name: shyft-hydrology
+      type: LoadBalancer
+  7: |
+    apiVersion: v1
+    automountServiceAccountToken: false
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        example.org/owner: hydrology
+      labels:
+        app.kubernetes.io/component: core
+        app.kubernetes.io/instance: shyft-hydrology
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: shyft-hydrology
+        app.kubernetes.io/part-of: shyft
+        app.kubernetes.io/version: "0.0"
+        helm.sh/chart: shyft-hydrology-0.0.0
+      name: shyft-hydrology

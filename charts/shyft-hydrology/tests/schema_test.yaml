@@ -1,0 +1,128 @@
+suite: schema
+# values.schema.json is strict: a wrong value fails at `helm install`, not at runtime.
+templates:
+  - templates/service.yaml
+tests:
+  - it: accepts the defaults
+    asserts:
+      - isKind: {of: Service}
+
+  - it: rejects a key that does not exist
+    set:
+      drms.replicas: 3
+    asserts:
+      - failedTemplate:
+          errorPattern: replicas
+
+  - it: rejects an unknown top-level key
+    set:
+      ingress.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: ingress
+
+  - it: rejects an unknown core service under resources
+    set:
+      core.resources.gcd: {}
+    asserts:
+      - failedTemplate:
+          errorPattern: gcd
+
+  - it: rejects a misspelt key under tests
+    set:
+      tests.modelrun.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: modelrun
+
+  - it: rejects a base port whose highest service port would not fit
+    set:
+      shyft.basePort: 65520
+    asserts:
+      - failedTemplate:
+          errorPattern: basePort
+
+  - it: rejects a privileged base port
+    set:
+      shyft.basePort: 80
+    asserts:
+      - failedTemplate:
+          errorPattern: basePort
+
+  - it: rejects NodePort, which would open the services on every node
+    set:
+      service.type: NodePort
+    asserts:
+      - failedTemplate:
+          errorPattern: type
+
+  - it: rejects an unknown pull policy
+    set:
+      image.pullPolicy: Sometimes
+    asserts:
+      - failedTemplate:
+          errorPattern: pullPolicy
+
+  - it: rejects a malformed digest
+    set:
+      image.digest: latest
+    asserts:
+      - failedTemplate:
+          errorPattern: digest
+
+  - it: rejects a negative replica count
+    set:
+      drms.replicaCount: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: replicaCount
+
+  - it: rejects a relative data mount path
+    set:
+      persistence.data.mountPath: shyft-data
+    asserts:
+      - failedTemplate:
+          errorPattern: mountPath
+
+  - it: rejects an empty list of access modes
+    set:
+      persistence.var.accessModes: []
+    asserts:
+      - failedTemplate:
+          errorPattern: accessModes
+
+  - it: accepts free-form Kubernetes fields
+    set:
+      core.resources.dtss:
+        requests: {cpu: 2, memory: 32Gi, ephemeral-storage: 1Gi}
+        limits: {memory: 64Gi}
+      core.tolerations:
+        - {key: dedicated, operator: Exists, effect: NoSchedule}
+      drms.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - {key: pool, operator: In, values: [drms]}
+      podSecurityContext:
+        runAsUser: 12345
+        supplementalGroups: [2000]
+        seccompProfile: {type: Localhost, localhostProfile: shyft.json}
+      securityContext:
+        capabilities: {drop: [ALL], add: [NET_BIND_SERVICE]}
+      networkPolicy.clientPeers:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: notebooks}
+      imagePullSecrets:
+        - name: regcred
+      global:
+        anything: goes
+    asserts:
+      - isKind: {of: Service}
+
+  - it: rejects a cloud the load balancer guard does not know
+    set:
+      service.cloud: gcp
+    asserts:
+      - failedTemplate:
+          errorPattern: cloud

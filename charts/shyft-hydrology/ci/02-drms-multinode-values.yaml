@@ -1,0 +1,8 @@
+# Two drms, one per kind worker, so registration with task and the statistics path to dtss cross nodes.
+drms:
+  replicaCount: 2
+  podDisruptionBudget:
+    enabled: true
+tests:
+  modelRun:
+    enabled: true
