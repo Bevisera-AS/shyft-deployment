@@ -44,7 +44,7 @@ Azure yet.
 
 ## Connect
 
-Each service listens on `shyft.basePort + 2·n`:
+Each service listens on `basePort + 2·n`:
 
 | Service | n | Port at base 20000 | In the Service |
 |---|---|---|---|
@@ -152,24 +152,24 @@ does not do: read the Shyft release notes first.
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | imagePullSecrets | list | `[]` | Pull secrets for the image, as a list of `{name: …}`. |
 
-### 03. Shyft
+### 03. Ports
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| shyft.basePort | int | `20000` | Base port. Each service listens on `basePort + 2·n`: task 0, rmd 1, parameter 2, state 3, drms 4, dtss 5, dstm 6, stm 7, goal_function 8. The offsets are fixed by Shyft. |
+| basePort | int | `20000` | Base port, shared by core and drms (Shyft's `SHYFT_SERVICE_BASE_PORT`). Each service listens on `basePort + 2·n`: task 0, rmd 1, parameter 2, state 3, drms 4, dtss 5, dstm 6, stm 7, goal_function 8. The offsets are fixed by Shyft. |
 
 ### 04. Core services
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| core.resources.task | object | `{"requests":{"cpu":"100m","memory":"256Mi"}}` | Resources of the task container. |
-| core.resources.rmd | object | `{"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the rmd (region model description) container. |
-| core.resources.parameter | object | `{"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the parameter container. |
-| core.resources.state | object | `{"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the state container. |
-| core.resources.dtss | object | `{"requests":{"cpu":"100m","memory":"512Mi"}}` | Resources of the dtss (time-series) container. The one that needs memory: Sigma2 gives it 32 to 64 GiB. |
-| core.resources.dstm | object | `{"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the dstm container. |
-| core.resources.stm | object | `{"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the stm container. |
-| core.resources.goal_function | object | `{"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the goal_function container. |
+| core.resources.task | object | `{"limits":{"memory":"1Gi"},"requests":{"cpu":"100m","memory":"256Mi"}}` | Resources of the task container. |
+| core.resources.rmd | object | `{"limits":{"memory":"1Gi"},"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the rmd (region model description) container. |
+| core.resources.parameter | object | `{"limits":{"memory":"1Gi"},"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the parameter container. |
+| core.resources.state | object | `{"limits":{"memory":"1Gi"},"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the state container. |
+| core.resources.dtss | object | `{"limits":{"memory":"4Gi"},"requests":{"cpu":"100m","memory":"512Mi"}}` | Resources of the dtss (time-series) container. The one that needs memory: Sigma2 gives it 32 to 64 GiB. |
+| core.resources.dstm | object | `{"limits":{"memory":"2Gi"},"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the dstm container. |
+| core.resources.stm | object | `{"limits":{"memory":"1Gi"},"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the stm container. |
+| core.resources.goal_function | object | `{"limits":{"memory":"1Gi"},"requests":{"cpu":"50m","memory":"256Mi"}}` | Resources of the goal_function container. |
 | core.extraEnv | list | `[]` | Extra environment variables for every core container, as a list of `{name, value}` or `{name, valueFrom}`. |
 | core.podAnnotations | object | `{}` | Annotations for the core pod. |
 | core.podLabels | object | `{}` | Extra labels for the core pod. |
@@ -184,7 +184,7 @@ does not do: read the Shyft release notes first.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | drms.replicaCount | int | `1` | Number of drms compute nodes. Each registers itself with task. 0 deploys the core services only. |
-| drms.resources | object | `{"requests":{"cpu":"250m","memory":"512Mi"}}` | Resources of each drms. A run uses every core it can get: Sigma2 gives each 16 CPU and 64 GiB. |
+| drms.resources | object | `{"limits":{"memory":"2Gi"},"requests":{"cpu":"250m","memory":"512Mi"}}` | Resources of each drms. A run uses every core it can get: Sigma2 gives each 16 CPU and 64 GiB. |
 | drms.spreadAcrossNodes | bool | `true` | Prefer one drms per node (a soft topology spread constraint on the hostname). |
 | drms.topologySpreadConstraints | list | `[]` | Extra topology spread constraints for drms pods. |
 | drms.podDisruptionBudget.enabled | bool | `false` | Create a PodDisruptionBudget for drms, so a node drain takes them one at a time. |
@@ -249,6 +249,7 @@ does not do: read the Shyft release notes first.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| tests.resources | object | `{"limits":{"memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the helm test pods. They peaked at about 140 MiB in CI. |
 | tests.nodeSelector | object | `{}` | Node selector for the `helm test` pods. They run the Shyft image, so on a cluster with arm64 nodes they need `kubernetes.io/arch: amd64` like the workloads do. |
 | tests.tolerations | list | `[]` | Tolerations for the `helm test` pods. |
 | tests.affinity | object | `{}` | Affinity for the `helm test` pods. |

@@ -23,7 +23,7 @@ tests:
 
   - it: moves every port with the base port
     set:
-      shyft.basePort: 22000
+      basePort: 22000
     asserts:
       - template: templates/core-statefulset.yaml
         equal: {path: 'spec.template.spec.containers[?(@.name=="task")].ports[0].containerPort', value: 22000}

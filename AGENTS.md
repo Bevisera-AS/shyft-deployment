@@ -77,7 +77,7 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
 [docs/shyft-services.md](docs/shyft-services.md).
 
 - Port = `basePort + 2·rel`; `+1` is a web port Shyft never starts. `rel` is hard-coded upstream; only
-  `shyft.basePort` is configurable. Every port comes from `_ports.tpl`.
+  `basePort` is configurable. Every port comes from `_ports.tpl`.
   `task 0 · rmd 1 · parameter 2 · state 3 · drms 4 · dtss 5 · dstm 6 · stm 7 · goal_function 8`
 - rmd is what Shyft 28 called gcd: its database directory is still `gcd/db` and its host variable `SHYFT_GCD_HOST`.
 - Binary protocol only: no Ingress, no HTTP probes. `tcpSocket` probes; expose via `port-forward` or an internal
@@ -114,6 +114,9 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
   with YAML comments, they are useful in `helm get manifest`.
 - `.helmignore` patterns for top-level directories are anchored (`/tests/`): a bare `tests/` also drops
   `templates/tests/`.
+- Every container has a memory request and a memory limit by default, test pods included, and no CPU limit
+  (it only throttles). `shyft.checkResources` fails a memory request above its limit: Helm merges values, so
+  a raised request alone keeps the default limit. A new container goes through it too.
 - Pin every image, test pods included. Test and probe pods use the Shyft image: it is already on the nodes.
   Outside the templates, the image reference comes from `hack/image.sh`, which renders the chart: never
   rebuild it from `repository` and `tag`, that drops `image.digest`.

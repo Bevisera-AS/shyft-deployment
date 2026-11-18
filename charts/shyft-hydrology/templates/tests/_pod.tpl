@@ -48,11 +48,16 @@ spec:
         - name: SHYFT_SERVICE_HOST
           value: {{ include "shyft.fullname" .root }}
         - name: SHYFT_SERVICE_BASE_PORT
-          value: {{ .root.Values.shyft.basePort | int | quote }}
+          value: {{ .root.Values.basePort | int | quote }}
         - name: SHYFT_SERVICE_ROOT
           value: /tmp/shyft
       securityContext:
         {{- toYaml .root.Values.securityContext | nindent 8 }}
+      {{- include "shyft.checkResources" (dict "path" "tests.resources" "resources" .root.Values.tests.resources) }}
+      {{- with .root.Values.tests.resources }}
+      resources:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumeMounts:
         - name: tmp
           mountPath: /tmp

@@ -119,3 +119,37 @@ service.type=LoadBalancer needs service.cloud (aws, azure or gke): only that clo
 service.cloud={{ $cloud }} needs one of these service.annotations, to make the load balancer internal: {{ join ", " $hints }}.
 {{- end -}}
 {{- end }}
+
+{{/*
+Bytes in a Kubernetes memory quantity ("512Mi", "2Gi", "1G", "1048576"), or nothing for a form it does not
+know (exponents, milli), so that the check below then stays quiet instead of guessing.
+*/}}
+{{- define "shyft.bytes" -}}
+{{- $units := dict "" 1.0 "k" 1e3 "M" 1e6 "G" 1e9 "T" 1e12 "P" 1e15 "Ki" 1024.0 "Mi" 1048576.0 "Gi" 1073741824.0 "Ti" 1099511627776.0 "Pi" 1125899906842624.0 -}}
+{{- $q := toString . -}}
+{{- $n := regexFind "^[0-9]+(\\.[0-9]+)?" $q -}}
+{{- $unit := trimPrefix $n $q -}}
+{{- if and $n (hasKey $units $unit) -}}
+{{- mulf (float64 $n) (get $units $unit) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Fail when a container's memory request is above its memory limit. Helm merges the user's resources into the
+defaults, so raising only a request keeps the default limit, and Kubernetes would refuse the pod at install
+time, after `helm template` and kubeconform had passed it.
+Context: dict "path" (the values path, for the message) "resources"
+*/}}
+{{- define "shyft.checkResources" -}}
+{{- with .resources -}}
+{{- $request := dig "requests" "memory" "" . -}}
+{{- $limit := dig "limits" "memory" "" . -}}
+{{- if and $request $limit -}}
+{{- $r := include "shyft.bytes" $request -}}
+{{- $l := include "shyft.bytes" $limit -}}
+{{- if and $r $l (gt (float64 $r) (float64 $l)) -}}
+{{- fail (printf "%s: the memory request %v is above the memory limit %v, and Kubernetes refuses that. Set %s.limits.memory too: the chart has a default limit." $.path $request $limit $.path) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end }}

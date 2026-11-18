@@ -37,14 +37,14 @@ tests:
 
   - it: rejects a base port whose highest service port would not fit
     set:
-      shyft.basePort: 65520
+      basePort: 65520
     asserts:
       - failedTemplate:
           errorPattern: basePort
 
   - it: rejects a privileged base port
     set:
-      shyft.basePort: 80
+      basePort: 80
     asserts:
       - failedTemplate:
           errorPattern: basePort

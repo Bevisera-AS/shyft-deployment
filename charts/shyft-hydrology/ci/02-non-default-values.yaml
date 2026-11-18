@@ -7,8 +7,7 @@
 # - Memory limits, extra env and pod labels.
 # Restricted clients are in hack/networkpolicy-test.sh, which also checks that the others are refused.
 fullnameOverride: shyft
-shyft:
-  basePort: 22000
+basePort: 22000
 podSecurityContext:
   runAsUser: 2000
   runAsGroup: 2000

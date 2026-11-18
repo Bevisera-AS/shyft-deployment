@@ -21,7 +21,7 @@ YAML
 log "the chart's own tests pass: task reaches the drms, the drms reaches task and dtss"
 helm_test
 
-base=$(yq .shyft.basePort "$CHART/values.yaml")
+base=$(yq .basePort "$CHART/values.yaml")
 drms_ip=$(k get pods -l app.kubernetes.io/component=drms -o jsonpath='{.items[0].status.podIP}')
 
 expect() {

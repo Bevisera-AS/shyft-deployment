@@ -63,6 +63,8 @@ renders the defaults:
                 tcpSocket:
                   port: task
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -112,6 +114,8 @@ renders the defaults:
                 tcpSocket:
                   port: rmd
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -161,6 +165,8 @@ renders the defaults:
                 tcpSocket:
                   port: parameter
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -210,6 +216,8 @@ renders the defaults:
                 tcpSocket:
                   port: state
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -259,6 +267,8 @@ renders the defaults:
                 tcpSocket:
                   port: dtss
               resources:
+                limits:
+                  memory: 4Gi
                 requests:
                   cpu: 100m
                   memory: 512Mi
@@ -308,6 +318,8 @@ renders the defaults:
                 tcpSocket:
                   port: dstm
               resources:
+                limits:
+                  memory: 2Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -357,6 +369,8 @@ renders the defaults:
                 tcpSocket:
                   port: stm
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -406,6 +420,8 @@ renders the defaults:
                 tcpSocket:
                   port: goal-function
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -518,6 +534,8 @@ renders the defaults:
                 tcpSocket:
                   port: drms
               resources:
+                limits:
+                  memory: 2Gi
                 requests:
                   cpu: 250m
                   memory: 512Mi
@@ -785,6 +803,8 @@ renders with every option on:
                 tcpSocket:
                   port: task
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 100m
                   memory: 256Mi
@@ -839,6 +859,8 @@ renders with every option on:
                 tcpSocket:
                   port: rmd
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -893,6 +915,8 @@ renders with every option on:
                 tcpSocket:
                   port: parameter
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -947,6 +971,8 @@ renders with every option on:
                 tcpSocket:
                   port: state
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -1057,6 +1083,8 @@ renders with every option on:
                 tcpSocket:
                   port: dstm
               resources:
+                limits:
+                  memory: 2Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -1111,6 +1139,8 @@ renders with every option on:
                 tcpSocket:
                   port: stm
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi
@@ -1165,6 +1195,8 @@ renders with every option on:
                 tcpSocket:
                   port: goal-function
               resources:
+                limits:
+                  memory: 1Gi
                 requests:
                   cpu: 50m
                   memory: 256Mi

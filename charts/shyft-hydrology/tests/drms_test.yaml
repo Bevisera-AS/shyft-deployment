@@ -73,6 +73,7 @@ tests:
       drms:
         resources:
           requests: {cpu: "16", memory: 64Gi}
+          limits: {memory: 64Gi}
         extraEnv:
           - {name: OMP_NUM_THREADS, value: "16"}
         podAnnotations: {example.org/a: "1"}
@@ -85,7 +86,7 @@ tests:
         priorityClassName: low
         terminationGracePeriodSeconds: 45
     asserts:
-      - equal: {path: 'spec.template.spec.containers[0].resources', value: {requests: {cpu: "16", memory: 64Gi}}}
+      - equal: {path: 'spec.template.spec.containers[0].resources', value: {requests: {cpu: "16", memory: 64Gi}, limits: {memory: 64Gi}}}
       - contains:
           path: spec.template.spec.containers[0].env
           content: {name: OMP_NUM_THREADS, value: "16"}
@@ -96,6 +97,24 @@ tests:
       - exists: {path: spec.template.spec.affinity.nodeAffinity}
       - equal: {path: spec.template.spec.priorityClassName, value: low}
       - equal: {path: spec.template.spec.terminationGracePeriodSeconds, value: 45}
+
+  - it: limits its memory by default, and not its CPU
+    template: templates/drms-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {memory: 2Gi}
+
+  # Helm merges values: raising only the request keeps the default 2Gi limit, which Kubernetes would refuse.
+  - it: refuses a memory request above the memory limit, naming the value to set
+    template: templates/drms-deployment.yaml
+    set:
+      drms.resources.requests.memory: 64Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: "drms.resources: the memory request 64Gi is above the memory limit 2Gi.*Set drms.resources.limits.memory too"
 
   - it: has no PodDisruptionBudget by default
     template: templates/drms-pdb.yaml

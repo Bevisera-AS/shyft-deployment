@@ -10,8 +10,7 @@ image:
 imagePullSecrets:
   - name: sigma2asregistry
 
-shyft:
-  basePort: 22000
+basePort: 22000
 
 core:
   resources:

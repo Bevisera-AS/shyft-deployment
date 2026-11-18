@@ -48,6 +48,7 @@ spec:
           "env" (list (dict "name" "POD_IP" "valueFrom" (dict "fieldRef" (dict "fieldPath" "status.podIP"))))
           "extraEnv" .Values.drms.extraEnv
           "resources" .Values.drms.resources
+          "path" "drms.resources"
           "var" false
           "data" (and $data.enabled $data.mountInDrms)) | nindent 8 }}
       volumes:

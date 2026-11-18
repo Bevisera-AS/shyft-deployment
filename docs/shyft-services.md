@@ -109,6 +109,10 @@ gone. Mirror the images you depend on.
 ## Resource behaviour
 
 - An idle service uses about 200 MiB. The core pod idles at about 1.7 GiB.
+- Under the CI workload (the demo model, five model runs) every service peaked at 130–185 MiB, a drms at
+  about 130 MiB and a helm test pod at about 140 MiB (cgroup `memory.peak`, kind, 2026-11-19). The chart's
+  default memory limits (1 GiB, dstm 2 GiB, dtss 4 GiB, drms 2 GiB, test pods 512 MiB) leave room for that
+  many times over; they are not production sizes.
 - dtss and dstm each set a cache target of 10 GiB, and dtss an index cache of 4 GiB. They grow with use. A
   memory limit below that can get them killed under load.
 - A drms uses every core it is given during a run and is idle otherwise.

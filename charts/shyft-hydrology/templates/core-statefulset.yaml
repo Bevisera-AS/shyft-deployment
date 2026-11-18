@@ -58,6 +58,7 @@ spec:
           "env" $env
           "extraEnv" $.Values.core.extraEnv
           "resources" (get $.Values.core.resources $service)
+          "path" (printf "core.resources.%s" $service)
           "var" true
           "data" $data.enabled) | nindent 8 }}
         {{- end }}

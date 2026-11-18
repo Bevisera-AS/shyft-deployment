@@ -98,6 +98,25 @@ tests:
           path: 'spec.template.spec.containers[?(@.name=="task")].resources'
           value:
             requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 1Gi}
+
+  # Clusters with a LimitRange or a policy engine refuse containers without limits. CPU limits only throttle.
+  - it: limits the memory of every service by default, and no CPU
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="dtss")].resources.limits'
+          value: {memory: 4Gi}
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="dstm")].resources.limits'
+          value: {memory: 2Gi}
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="goal-function")].resources.limits'
+          value: {memory: 1Gi}
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name!="dtss" && @.name!="dstm")].resources.limits'
+          value: {memory: 1Gi}
+      - notExists:
+          path: 'spec.template.spec.containers[*].resources.limits.cpu'
 
   - it: passes pod metadata, extra env and scheduling through
     set:
@@ -135,3 +154,20 @@ tests:
             app.kubernetes.io/name: shyft-hydrology
             app.kubernetes.io/instance: shyft-hydrology
             app.kubernetes.io/component: core
+
+  - it: refuses a memory request above the memory limit, in decimal units too
+    set:
+      core.resources.dtss.requests.memory: 5G
+    asserts:
+      - failedTemplate:
+          errorPattern: "core.resources.dtss: the memory request 5G is above the memory limit 4Gi"
+
+  - it: accepts a memory request equal to the limit in other units
+    set:
+      core.resources.task:
+        requests: {memory: 1024Mi}
+        limits: {memory: 1Gi}
+    asserts:
+      - equal:
+          path: 'spec.template.spec.containers[?(@.name=="task")].resources.requests.memory'
+          value: 1024Mi

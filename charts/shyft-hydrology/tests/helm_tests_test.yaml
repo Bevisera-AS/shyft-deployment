@@ -94,3 +94,34 @@ tests:
         equal: {path: 'metadata.annotations["helm.sh/hook-weight"]', value: "1"}
       - template: templates/tests/test-connection.yaml
         notExists: {path: spec.activeDeadlineSeconds}
+
+  - it: sizes both test pods, with a memory limit and no CPU limit
+    templates:
+      - templates/tests/test-connection.yaml
+      - templates/tests/test-model-run.yaml
+    set:
+      tests.modelRun.enabled: true
+    asserts:
+      - equal:
+          path: spec.containers[0].resources
+          value:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {memory: 512Mi}
+
+  - it: takes the test pods' resources from values
+    template: templates/tests/test-connection.yaml
+    set:
+      tests.resources:
+        limits: {cpu: "1", memory: 1Gi}
+    asserts:
+      - equal:
+          path: spec.containers[0].resources.limits
+          value: {cpu: "1", memory: 1Gi}
+
+  - it: refuses a test pod memory request above its limit
+    template: templates/tests/test-connection.yaml
+    set:
+      tests.resources.requests.memory: 1Gi
+    asserts:
+      - failedTemplate:
+          errorPattern: "tests.resources: the memory request 1Gi is above the memory limit 512Mi"

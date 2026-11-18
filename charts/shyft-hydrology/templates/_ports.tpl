@@ -35,7 +35,7 @@ Context: dict "root" $ "service" "dtss"
 */}}
 {{- define "shyft.port" -}}
 {{- $rel := get (include "shyft.relativePorts" . | fromYaml) .service -}}
-{{- add (int .root.Values.shyft.basePort) (mul 2 (int $rel)) -}}
+{{- add (int .root.Values.basePort) (mul 2 (int $rel)) -}}
 {{- end }}
 
 {{/*

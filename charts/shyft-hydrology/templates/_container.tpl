@@ -7,10 +7,12 @@ Context: dict
   "env"       list of environment variables the workload needs, after SHYFT_SERVICE_BASE_PORT (optional)
   "extraEnv"  list of the user's extra environment variables (optional)
   "resources" resources of this container
+  "path"      where those resources are in values, for error messages
   "var"       bool: mount the service databases at /shyft-var
   "data"      bool: mount the input data volume
 */}}
 {{- define "shyft.container" -}}
+{{- include "shyft.checkResources" (dict "path" .path "resources" .resources) -}}
 {{- $name := include "shyft.serviceName" .service -}}
 - name: {{ $name }}
   image: {{ include "shyft.image" .root | quote }}
@@ -27,7 +29,7 @@ Context: dict
     - name: PYTHONUNBUFFERED
       value: "1"
     - name: SHYFT_SERVICE_BASE_PORT
-      value: {{ .root.Values.shyft.basePort | int | quote }}
+      value: {{ .root.Values.basePort | int | quote }}
     {{- with .env }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
