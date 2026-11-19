@@ -12,10 +12,21 @@ cd "$(dirname "$0")/.."
 cluster=${KIND_CLUSTER:?KIND_CLUSTER is not set; run this through mise run load-image}
 image=$(hack/image.sh)
 
+# pull <node>: up to three tries. The registry is on the internet: on GitHub a single try once failed on a
+# timeout fetching GitLab's anonymous token. ctr itself does not retry.
+pull() {
+  local node=$1 try
+  for try in 1 2 3; do
+    docker exec "$node" ctr --namespace k8s.io images pull --platform linux/amd64 "$image" >/dev/null && return 0
+    [ "$try" = 3 ] || { echo "pull on $node failed (try $try of 3); retrying in $((try * 10)) s" >&2; sleep $((try * 10)); }
+  done
+  return 1
+}
+
 pids=()
 for node in $(kind get nodes --name "$cluster" | grep worker); do
   echo "pulling $image on $node"
-  docker exec "$node" ctr --namespace k8s.io images pull --platform linux/amd64 "$image" >/dev/null &
+  pull "$node" &
   pids+=("$!")
 done
 [ "${#pids[@]}" -gt 0 ] || { echo "kind cluster '$cluster' has no worker nodes" >&2; exit 1; }
