@@ -3,6 +3,13 @@
 All notable changes to this chart. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 The version is the chart's own SemVer. The Shyft line it deploys is `appVersion` in `Chart.yaml`.
 
+## [0.0.5] - 2026-11-19
+
+### Added
+
+* MIT licence: `LICENSE` in the chart package, and the `artifacthub.io/license` annotation.
+* `maintainers` in `Chart.yaml`: Bevisera AS.
+
 ## [0.0.4] - 2026-11-19
 
 ### Changed
