@@ -1,0 +1,65 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $fullname := include "shyft.fullname" . -}}
+{{- $core := dict "root" . "component" "core" -}}
+{{- $drms := dict "root" . "component" "drms" -}}
+{{- $test := dict "root" . "component" "test" -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-core
+  labels:
+    {{- include "shyft.labels" $core | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "shyft.selectorLabels" $core | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # drms registers with task and stores statistics in dtss.
+        - podSelector:
+            matchLabels:
+              {{- include "shyft.selectorLabels" $drms | nindent 14 }}
+        # The chart's own `helm test` pods.
+        - podSelector:
+            matchLabels:
+              {{- include "shyft.selectorLabels" $test | nindent 14 }}
+        {{- if .Values.networkPolicy.allowNamespace }}
+        # networkPolicy.allowNamespace: every pod in this namespace.
+        - podSelector: {}
+        {{- end }}
+        {{- with .Values.networkPolicy.clientPeers }}
+        # networkPolicy.clientPeers
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      ports:
+        {{- range $service := include "shyft.coreServices" . | fromYamlArray }}
+        - port: {{ include "shyft.port" (dict "root" $ "service" $service) }}
+          protocol: TCP
+        {{- end }}
+{{- if gt (int .Values.drms.replicaCount) 0 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-drms
+  labels:
+    {{- include "shyft.labels" $drms | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "shyft.selectorLabels" $drms | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only task, in the core pod, talks to a drms.
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "shyft.selectorLabels" $core | nindent 14 }}
+      ports:
+        - port: {{ include "shyft.port" (dict "root" . "service" "drms") }}
+          protocol: TCP
+{{- end }}
+{{- end }}

@@ -1,0 +1,12 @@
+{{- if .Values.tests.modelRun.enabled }}
+{{- if lt (int .Values.drms.replicaCount) 1 }}
+{{- fail "tests.modelRun.enabled needs drms.replicaCount of at least 1: a model run waits for a registered drms" }}
+{{- end }}
+{{- include "shyft.testPod" (dict
+  "root" .
+  "name" "model-run"
+  "script" "test_model_run.py"
+  "about" "Writes demo data: seeds Shyft's demo model and runs it through task, a drms and dtss."
+  "weight" "1"
+  "deadline" 300) }}
+{{- end }}

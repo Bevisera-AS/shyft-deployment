@@ -1,0 +1,28 @@
+suite: snapshot
+# The whole rendered output, so a review shows every change to the manifests, intended or not.
+# Update with `mise run snapshot-update` and say why in the commit message.
+# Left out on purpose, so that routine bumps do not touch the snapshots: the chart version and appVersion, which
+# is also the image tag (both fixed below), and the helm test pods (their scripts are in files/).
+templates:
+  - templates/core-statefulset.yaml
+  - templates/drms-deployment.yaml
+  - templates/drms-pdb.yaml
+  - templates/networkpolicy.yaml
+  - templates/service.yaml
+  - templates/serviceaccount.yaml
+release:
+  name: shyft-hydrology
+  namespace: shyft
+chart:
+  version: 0.0.0
+  appVersion: snapshot
+tests:
+  - it: renders the defaults
+    asserts:
+      - matchSnapshot: {}
+
+  - it: renders with every option on
+    values:
+      - values/full.yaml
+    asserts:
+      - matchSnapshot: {}

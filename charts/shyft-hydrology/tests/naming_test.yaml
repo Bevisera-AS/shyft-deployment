@@ -1,0 +1,45 @@
+suite: naming
+templates:
+  - templates/service.yaml
+# Fixed here, so that a chart version bump does not touch this suite.
+chart:
+  version: 1.2.3
+  appVersion: "1.2"
+tests:
+  - it: uses the release name when it contains the chart name
+    release:
+      name: shyft-hydrology
+    asserts:
+      - equal: {path: metadata.name, value: shyft-hydrology}
+
+  - it: prefixes the release name otherwise
+    release:
+      name: prod
+    asserts:
+      - equal: {path: metadata.name, value: prod-shyft-hydrology}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/instance"]', value: prod}
+
+  - it: honours fullnameOverride and nameOverride
+    release:
+      name: prod
+    set:
+      fullnameOverride: shyft
+      nameOverride: hydro
+    asserts:
+      - equal: {path: metadata.name, value: shyft}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/name"]', value: hydro}
+
+  - it: keeps names short enough for the longest suffix
+    release:
+      name: a-very-long-release-name-that-goes-on-and-on-and-on
+    asserts:
+      - equal: {path: metadata.name, value: a-very-long-release-name-that-goes-on-an}
+
+  - it: labels with chart, Shyft line and part-of
+    release:
+      name: shyft-hydrology
+    asserts:
+      - equal: {path: 'metadata.labels["helm.sh/chart"]', value: shyft-hydrology-1.2.3}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/version"]', value: "1.2"}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/part-of"]', value: shyft}
+      - equal: {path: 'metadata.labels["app.kubernetes.io/managed-by"]', value: Helm}

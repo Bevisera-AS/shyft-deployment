@@ -1,0 +1,4 @@
+# chart-releaser config, used by release.yaml.
+# The repository ruleset requires verified signatures on every branch, gh-pages included: cr creates the
+# index.yaml commit through GitHub's API (with CR_TOKEN), which signs it. A plain `git push` is rejected.
+sign-commits: true

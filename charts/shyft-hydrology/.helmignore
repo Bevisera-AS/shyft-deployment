@@ -1,0 +1,13 @@
+# Not part of the packaged chart.
+.DS_Store
+.git/
+*.swp
+*.tmp
+*.orig
+*~
+# Inputs for generated files and for CI
+README.md.gotmpl
+.schema.yaml
+# Anchored: a bare `tests/` would also drop templates/tests/, the helm tests.
+/ci/
+/tests/

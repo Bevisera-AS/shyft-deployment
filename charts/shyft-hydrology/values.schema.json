@@ -1,0 +1,500 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "shyft-hydrology values",
+  "type": "object",
+  "properties": {
+    "basePort": {
+      "description": "Base port, shared by core and drms (Shyft's `SHYFT_SERVICE_BASE_PORT`). Each service listens on `basePort + 2·n`: task 0, rmd 1, parameter 2, state 3, drms 4, dtss 5, dstm 6, stm 7, goal_function 8. The offsets are fixed by Shyft.",
+      "type": "integer",
+      "maximum": 65518,
+      "minimum": 1024
+    },
+    "core": {
+      "type": "object",
+      "properties": {
+        "affinity": {
+          "description": "Affinity for the core pod.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "extraEnv": {
+          "description": "Extra environment variables for every core container, as a list of `{name, value}` or `{name, valueFrom}`.",
+          "type": "array"
+        },
+        "nodeSelector": {
+          "description": "Node selector for the core pod.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "description": "Annotations for the core pod.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podLabels": {
+          "description": "Extra labels for the core pod.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "priorityClassName": {
+          "description": "Priority class of the core pod.",
+          "type": "string"
+        },
+        "resources": {
+          "type": "object",
+          "properties": {
+            "dstm": {
+              "description": "Resources of the dstm container.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "dtss": {
+              "description": "Resources of the dtss (time-series) container. The one that needs memory: Sigma2 gives it 32 to 64 GiB.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "goal_function": {
+              "description": "Resources of the goal_function container.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "parameter": {
+              "description": "Resources of the parameter container.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rmd": {
+              "description": "Resources of the rmd (region model description) container.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "state": {
+              "description": "Resources of the state container.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "stm": {
+              "description": "Resources of the stm container.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "task": {
+              "description": "Resources of the task container.",
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "terminationGracePeriodSeconds": {
+          "description": "Seconds the services get to stop after SIGTERM.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "tolerations": {
+          "description": "Tolerations for the core pod.",
+          "type": "array"
+        }
+      },
+      "additionalProperties": false
+    },
+    "drms": {
+      "type": "object",
+      "properties": {
+        "affinity": {
+          "description": "Affinity for drms pods.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "extraEnv": {
+          "description": "Extra environment variables for the drms container.",
+          "type": "array"
+        },
+        "nodeSelector": {
+          "description": "Node selector for drms pods.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podAnnotations": {
+          "description": "Annotations for drms pods.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "podDisruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "description": "Create a PodDisruptionBudget for drms, so a node drain takes them one at a time.",
+              "type": "boolean"
+            },
+            "maxUnavailable": {
+              "description": "How many drms may be down during a voluntary disruption. A number or a percentage.",
+              "type": [
+                "integer",
+                "string"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "podLabels": {
+          "description": "Extra labels for drms pods.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "priorityClassName": {
+          "description": "Priority class of drms pods.",
+          "type": "string"
+        },
+        "replicaCount": {
+          "description": "Number of drms compute nodes. Each registers itself with task. 0 deploys the core services only.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "resources": {
+          "description": "Resources of each drms. A run uses every core it can get: Sigma2 gives each 16 CPU and 64 GiB.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "spreadAcrossNodes": {
+          "description": "Prefer one drms per node (a soft topology spread constraint on the hostname).",
+          "type": "boolean"
+        },
+        "terminationGracePeriodSeconds": {
+          "description": "Seconds a drms gets to unregister from task after SIGTERM. A drms killed before that stays in task's queue until task restarts.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "tolerations": {
+          "description": "Tolerations for drms pods.",
+          "type": "array"
+        },
+        "topologySpreadConstraints": {
+          "description": "Extra topology spread constraints for drms pods.",
+          "type": "array"
+        }
+      },
+      "additionalProperties": false
+    },
+    "fullnameOverride": {
+      "description": "Overrides the full resource name prefix. Keep it under 40 characters.",
+      "type": "string"
+    },
+    "global": {
+      "description": "Global values shared between all subcharts",
+      "$comment": "Added automatically by 'helm schema' to allow this chart to be used as a Helm dependency, as this schema would otherwise not allow Helm's special 'global' values key.",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "digest": {
+          "description": "Optional image digest (`sha256:…`). When set, the image is pulled by digest and the tag is informational.",
+          "type": "string",
+          "pattern": "^(sha256:[a-f0-9]{64})?$"
+        },
+        "pullPolicy": {
+          "description": "Image pull policy.",
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "repository": {
+          "description": "Shyft image repository. Sigma2 can only pull from its own registry: mirror the image and set this.",
+          "type": "string"
+        },
+        "tag": {
+          "description": "Shyft image tag. Empty: the chart's `appVersion`, the image it was tested with. Set it only to run another build of the same Shyft line.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "imagePullSecrets": {
+      "description": "Pull secrets for the image, as a list of `{name: …}`.",
+      "type": "array"
+    },
+    "nameOverride": {
+      "description": "Overrides the chart name in resource names and labels.",
+      "type": "string"
+    },
+    "networkPolicy": {
+      "type": "object",
+      "properties": {
+        "allowNamespace": {
+          "description": "Let every pod in the release namespace connect to the core services.",
+          "type": "boolean"
+        },
+        "clientPeers": {
+          "description": "Who else may connect to the core services, as NetworkPolicy peers: a `podSelector`, a `namespaceSelector`, or with a load balancer an `ipBlock` for your client network.",
+          "type": "array"
+        },
+        "enabled": {
+          "description": "Create NetworkPolicies: core accepts drms, the chart's test pods and the clients below; drms accepts only core. They need a CNI that enforces NetworkPolicy.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "persistence": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "description": "Mount an existing claim with input data into the core containers.",
+              "type": "boolean"
+            },
+            "existingClaim": {
+              "description": "The claim to mount. Required when enabled; the chart never creates it.",
+              "type": "string"
+            },
+            "mountInDrms": {
+              "description": "Also mount it into drms pods. With more than one node this needs a ReadWriteMany (or ReadOnlyMany) claim.",
+              "type": "boolean"
+            },
+            "mountPath": {
+              "description": "Where to mount it.",
+              "type": "string",
+              "pattern": "^/.+"
+            },
+            "readOnly": {
+              "description": "Mount it read-only.",
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "var": {
+          "type": "object",
+          "properties": {
+            "accessModes": {
+              "description": "Access modes of the created claim.",
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string"
+              }
+            },
+            "enabled": {
+              "description": "Keep the service databases on a PersistentVolume. `false` uses an emptyDir: data is lost with the pod.",
+              "type": "boolean"
+            },
+            "existingClaim": {
+              "description": "Use this existing claim instead of creating one. It must allow writes from the core pod's user.",
+              "type": "string"
+            },
+            "size": {
+              "description": "Size of the created claim. It cannot be changed through the chart later.",
+              "type": "string"
+            },
+            "storageClass": {
+              "description": "Storage class of the created claim. Empty uses the cluster default.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "podSecurityContext": {
+      "description": "Pod security context of every pod. uid and gid 1000 are user `ci` in the Shyft image. On storage that ignores `fsGroup` (NFS), set the uid and gid that own the directory.",
+      "type": "object",
+      "properties": {
+        "fsGroup": {
+          "type": "integer"
+        },
+        "fsGroupChangePolicy": {
+          "type": "string"
+        },
+        "runAsGroup": {
+          "type": "integer"
+        },
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": true
+    },
+    "probes": {
+      "type": "object",
+      "properties": {
+        "liveness": {
+          "type": "object",
+          "properties": {
+            "failureThreshold": {
+              "description": "Liveness probes that may fail before the container is restarted.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "periodSeconds": {
+              "description": "Seconds between liveness probes.",
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "readiness": {
+          "type": "object",
+          "properties": {
+            "failureThreshold": {
+              "description": "Readiness probes that may fail before the pod is taken out of the Service.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "periodSeconds": {
+              "description": "Seconds between readiness probes.",
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "startup": {
+          "type": "object",
+          "properties": {
+            "failureThreshold": {
+              "description": "Startup probes that may fail before the container is restarted. With the period: 2 minutes to start.",
+              "type": "integer",
+              "minimum": 1
+            },
+            "periodSeconds": {
+              "description": "Seconds between startup probes.",
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "securityContext": {
+      "description": "Container security context of every container. The root filesystem is read-only; /tmp is an emptyDir.",
+      "type": "object",
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "description": "Service annotations, for example the cloud's internal load balancer annotation.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "cloud": {
+          "description": "With `type: LoadBalancer`: the cloud the cluster runs in. The chart then requires that cloud's internal load balancer annotation in `annotations`: another cloud's annotation does nothing there, and the load balancer would be public.",
+          "type": "string",
+          "enum": [
+            "",
+            "aws",
+            "azure",
+            "gke"
+          ]
+        },
+        "type": {
+          "description": "Service type for the core services. `LoadBalancer` is rendered only with an annotation that makes it internal: Shyft's protocol has no authentication.",
+          "type": "string",
+          "enum": [
+            "ClusterIP",
+            "LoadBalancer"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "description": "ServiceAccount annotations.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "create": {
+          "description": "Create a ServiceAccount. The pods never talk to the Kubernetes API and mount no token.",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "Name of the ServiceAccount. Empty uses the release's full name, or `default` when `create` is false.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "object",
+      "properties": {
+        "affinity": {
+          "description": "Affinity for the `helm test` pods.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "modelRun": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "description": "Add a `helm test` that seeds Shyft's demo model and runs it on a drms. It writes demo data into the databases, so it is off by default: use it in CI and on a fresh install. Needs at least one drms.",
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "nodeSelector": {
+          "description": "Node selector for the `helm test` pods. They run the Shyft image, so on a cluster with arm64 nodes they need `kubernetes.io/arch: amd64` like the workloads do.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "resources": {
+          "description": "Resources of the helm test pods. They peaked at about 140 MiB in CI.",
+          "type": "object",
+          "additionalProperties": true
+        },
+        "tolerations": {
+          "description": "Tolerations for the `helm test` pods.",
+          "type": "array"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
