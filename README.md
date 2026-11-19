@@ -1,10 +1,6 @@
 # shyft-deployment
 
-Helm chart for the [Shyft](https://gitlab.com/shyft-os/shyft) hydrology micro-services on Kubernetes:
-Sigma2 NIRD, AWS EKS, Azure AKS.
-
-> Not released yet. Task and plan:
-> [docs/llm-torture/2026.11.7-initial-implementation](docs/llm-torture/2026.11.7-initial-implementation/).
+Helm chart for the [Shyft](https://gitlab.com/shyft-os/shyft) hydrology micro-services on Kubernetes.
 
 ## What it deploys
 
@@ -21,7 +17,7 @@ Everything about the chart itself, including every value:
 ## Install (once released)
 
 ```sh
-helm repo add shyft https://lazyoldbear.github.io/shyft-deployment
+helm repo add shyft https://bevisera-as.github.io/shyft-deployment
 helm install shyft-hydrology shyft/shyft-hydrology --version <x.y.z> -f my-values.yaml
 helm test shyft-hydrology
 ```
@@ -30,7 +26,11 @@ Platform profiles: [charts/shyft-hydrology/examples/](charts/shyft-hydrology/exa
 [docs/platforms.md](docs/platforms.md).
 
 Every chart package has a build-provenance attestation. To check one you downloaded from a release:
-`gh attestation verify shyft-hydrology-<x.y.z>.tgz --repo lazyoldbear/shyft-deployment`.
+`gh attestation verify shyft-hydrology-<x.y.z>.tgz --repo Bevisera-AS/shyft-deployment`.
+
+The repository moved from `lazyoldbear/shyft-deployment` on 2026-11-19. The old Helm repository URL,
+`https://lazyoldbear.github.io/shyft-deployment`, no longer works: add the one above instead. Packages up to 0.0.3
+were attested under the old owner and verify with `--owner lazyoldbear` in place of `--repo`.
 
 ## Develop
 

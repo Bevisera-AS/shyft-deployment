@@ -3,11 +3,18 @@
 All notable changes to this chart. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 The version is the chart's own SemVer. The Shyft line it deploys is `appVersion` in `Chart.yaml`.
 
-## [0.0.4] - 2026-11-19
+## [0.0.5] - 2026-11-19
 
 ### Added
 
 * MIT licence: `LICENSE` in the chart package, and the `artifacthub.io/license` annotation.
+
+## [0.0.4] - 2026-11-19
+
+### Changed
+
+* The repository moved from personal `lazyoldbear/shyft-deployment` to `Bevisera-AS/shyft-deployment`, and the Helm repository to
+  `https://bevisera-as.github.io/shyft-deployment`: `helm repo add` it again. `home` and `sources` follow.
 
 ## [0.0.3] - 2026-11-19
 
