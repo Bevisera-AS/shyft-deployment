@@ -154,8 +154,8 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
   `| default`": it is Helm's own idiom). Renovate bumps `appVersion` (`# renovate:` comment); repository renames
   (`fedora44-shyft-app` → the next Fedora) are manual.
 - One supported Shyft line at a time. Shyft 28 is not supported: upstream removed its image.
-- `CHANGELOG.md` per chart, Keep a Changelog, headers `## [x.y.z] - YYYY-MM-DD` (`mise run lint` checks). Release
-  notes come from it.
+- `CHANGELOG.md` per chart, Keep a Changelog, headers `## [x.y.z] - YYYY-MM-DD`, list items with `*`
+  (`mise run lint` checks both). Release notes come from it.
 - Releases are CI-only: `release.yaml` reruns `lint-test.yaml` on the pushed `master` commit, then packages every
   chart, attests the packages and publishes them with chart-releaser (`skip_existing`) in the `release`
   environment. Nothing is downloadable before it is attested. A release that failed halfway (a draft
@@ -166,7 +166,8 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
 
 ## CI
 
-`lint-test.yaml` (PR; jobs `Workflows`, `Chart`, `kind (newest)` on 1.37; on `master` also `kind (oldest)` on 1.34)
+`lint-test.yaml` (PR; jobs `Workflows`, `Chart`, then, once both passed, `kind (newest)` on 1.37; on `master` also
+`kind (oldest)` on 1.34)
 · `release.yaml` (master; reuses it, so both kind lanes gate every release). Required checks: `Workflows`, `Chart`,
 `kind (newest)`. A failure only 1.34 shows surfaces after the merge, before the release.
 Actions pinned by SHA; Renovate bumps them, the tools in `mise.toml`, the Shyft image and Calico.
