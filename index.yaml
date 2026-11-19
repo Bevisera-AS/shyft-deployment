@@ -1,0 +1,25 @@
+apiVersion: v1
+entries:
+  shyft-hydrology:
+  - apiVersion: v2
+    appVersion: 37.3.0-1.1
+    created: "2026-11-19T11:27:00.065460295Z"
+    description: Shyft hydrology micro-services with a persistent core and scalable
+      drms compute nodes
+    digest: 947f6d1d129568cc54baa05034578b3320792ba68f906da510ed17b7ef640e1d
+    home: https://github.com/lazyoldbear/shyft-deployment
+    keywords:
+    - shyft
+    - hydrology
+    - time-series
+    - hpc
+    kubeVersion: '>=1.30.0-0'
+    name: shyft-hydrology
+    sources:
+    - https://github.com/lazyoldbear/shyft-deployment
+    - https://gitlab.com/shyft-os/shyft
+    type: application
+    urls:
+    - https://github.com/lazyoldbear/shyft-deployment/releases/download/shyft-hydrology-0.0.3/shyft-hydrology-0.0.3.tgz
+    version: 0.0.3
+generated: "2026-11-19T11:27:00.065467157Z"
