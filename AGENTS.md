@@ -166,7 +166,8 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
 
 ## CI
 
-`lint-test.yaml` (PR; jobs `Workflows`, `Chart`, `kind (newest)` on 1.37; on `master` also `kind (oldest)` on 1.34)
+`lint-test.yaml` (PR; jobs `Workflows`, `Chart`, then, once both passed, `kind (newest)` on 1.37; on `master` also
+`kind (oldest)` on 1.34)
 · `release.yaml` (master; reuses it, so both kind lanes gate every release). Required checks: `Workflows`, `Chart`,
 `kind (newest)`. A failure only 1.34 shows surfaces after the merge, before the release.
 Actions pinned by SHA; Renovate bumps them, the tools in `mise.toml`, the Shyft image and Calico.

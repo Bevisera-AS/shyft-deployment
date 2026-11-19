@@ -50,6 +50,9 @@ jobs:
 
   kind:
     name: kind (${{ matrix.lane }})
+    # Only after lint passed: no 10 minutes of kind for a change that fails in seconds. Costs about half a
+    # minute of waiting when lint passes.
+    needs: [workflows, chart]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     strategy:
