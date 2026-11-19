@@ -8,6 +8,7 @@ The version is the chart's own SemVer. The Shyft line it deploys is `appVersion`
 ### Added
 
 * MIT licence: `LICENSE` in the chart package, and the `artifacthub.io/license` annotation.
+* `maintainers` in `Chart.yaml`: Bevisera AS.
 
 ## [0.0.4] - 2026-11-19
 

@@ -13,6 +13,9 @@ home: https://github.com/Bevisera-AS/shyft-deployment
 sources:
   - https://github.com/Bevisera-AS/shyft-deployment
   - https://gitlab.com/shyft-os/shyft
+maintainers:
+  - name: Bevisera AS
+    url: https://bevisera.com
 keywords:
   - shyft
   - hydrology
