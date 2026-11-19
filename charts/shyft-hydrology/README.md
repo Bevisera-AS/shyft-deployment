@@ -1,6 +1,6 @@
 # shyft-hydrology
 
-![Version: 0.0.2](https://img.shields.io/badge/Version-0.0.2-informational?style=flat-square)  ![AppVersion: 37.3.0-1.1](https://img.shields.io/badge/AppVersion-37.3.0--1.1-informational?style=flat-square)
+![Version: 0.0.3](https://img.shields.io/badge/Version-0.0.3-informational?style=flat-square)  ![AppVersion: 37.3.0-1.1](https://img.shields.io/badge/AppVersion-37.3.0--1.1-informational?style=flat-square)
 
 Shyft hydrology micro-services with a persistent core and scalable drms compute nodes.
 
@@ -27,7 +27,7 @@ task and re-registers every 5 seconds, so drms pods can come and go.
 
 ```sh
 helm repo add shyft https://lazyoldbear.github.io/shyft-deployment
-helm install shyft-hydrology shyft/shyft-hydrology --version 0.0.2 --namespace shyft --create-namespace
+helm install shyft-hydrology shyft/shyft-hydrology --version 0.0.3 --namespace shyft --create-namespace
 helm test shyft-hydrology --namespace shyft
 ```
 
@@ -127,7 +127,7 @@ the databases. Use it on a fresh install or in CI, not on a system with real dat
 
 ## Upgrades
 
-The chart version is the chart's own SemVer: 0.0.2 deploys Shyft
+The chart version is the chart's own SemVer: 0.0.3 deploys Shyft
 37.3.0-1.1 (`appVersion`). While it is 0.x, a minor version may change values in ways
 that need your attention: the changelog says how. A chart upgrade restarts
 the core pod and keeps the data. Moving to another Shyft major may need a database migration that this chart
