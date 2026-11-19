@@ -258,3 +258,4 @@ does not do: read the Shyft release notes first.
 ## License
 
 MIT: [LICENSE](LICENSE), shipped in the chart package.
+Maintained by [Bevisera AS](https://bevisera.com).

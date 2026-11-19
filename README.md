@@ -64,6 +64,7 @@ What the chart relies on in Shyft: [docs/shyft-services.md](docs/shyft-services.
 ## License
 
 [MIT](LICENSE). The chart package carries the same text, so a downloaded chart has it too.
+Maintained by [Bevisera AS](https://bevisera.com).
 
 ## References
 
