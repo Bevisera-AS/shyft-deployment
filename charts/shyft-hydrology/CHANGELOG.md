@@ -3,6 +3,12 @@
 All notable changes to this chart. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 The version is the chart's own SemVer. The Shyft line it deploys is `appVersion` in `Chart.yaml`.
 
+## [0.0.3] - 2026-11-19
+
+### Nothing
+
+* Just dummy release to test the rig.
+
 ## [0.0.2] - 2026-11-19
 
 ### Nothing

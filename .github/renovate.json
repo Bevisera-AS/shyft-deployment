@@ -20,6 +20,16 @@
     },
     {
       "customType": "regex",
+      "description": "Tool versions given to actions in the workflows, marked with a `# renovate:` comment on the line above",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+version: (?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
       "description": "The Shyft image tag: appVersion in Chart.yaml, marked with a `# renovate:` comment on the line above",
       "managerFilePatterns": [
         "/^charts/[^/]+/Chart\\.yaml$/"
@@ -38,12 +48,19 @@
       "groupName": "GitHub Actions"
     },
     {
+      "description": "mise's tags are v2026.11.7; the mise-action version input takes 2026.11.7",
+      "matchDepNames": [
+        "jdx/mise"
+      ],
+      "extractVersion": "^v(?<version>.+)$"
+    },
+    {
       "description": "kindest/node images belong to a kind release",
       "matchDepNames": [
         "kind"
       ],
       "prBodyNotes": [
-        "Update `KIND_NODE_IMAGE` in `mise.toml` and the two node images in `lint-test.yaml` from this kind release's notes."
+        "Update `KIND_NODE_IMAGE` in `mise.toml` and the two node images in `lint-test.yaml` from this kind release's notes, and the oldest lane's `MISE_KUBECTL_VERSION` to the newest kubectl patch of that Kubernetes minor."
       ]
     },
     {
