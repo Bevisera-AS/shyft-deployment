@@ -1,5 +1,13 @@
 # TODO
 
+## Actual testing
+
+Needs be done.
+
+## Ingress
+
+Needs be done.
+
 ## Spec-driven harness
 
 Not started. A larger attempt (requirement syntax, JSON export, audit) was removed on 2026-11-12. This is
