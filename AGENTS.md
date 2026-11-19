@@ -156,14 +156,20 @@ Read from upstream source at tag 37.3.0-1.1 and checked against the image. Detai
   (`fedora44-shyft-app` → the next Fedora) are manual.
 - One supported Shyft line at a time. Shyft 28 is not supported: upstream removed its image.
 - `CHANGELOG.md` per chart, Keep a Changelog, headers `## [x.y.z] - YYYY-MM-DD`, list items with `*`
-  (`mise run lint` checks both). Release notes come from it.
+  (`mise run lint` checks both). Release notes come from it. It is packaged with the chart, so changing it is a
+  chart change and needs a version bump: fold changelog-only fixes into the next real change.
 - Releases are CI-only: `release.yaml` reruns `lint-test.yaml` on the pushed `master` commit, then packages every
   chart, attests the packages and publishes them with chart-releaser (`skip_existing`) in the `release`
   environment. Nothing is downloadable before it is attested. A release that failed halfway (a draft
   chart-releaser left, a release without its package or index entry) is repaired by a human, not by CI.
 - Published means a GitHub release `<chart>-<version>` plus `index.yaml` on the `gh-pages` branch, which Pages
   serves as the Helm repo. Never create a release or touch `gh-pages` by hand, unless a human asks for that
-  repair.
+  repair. 0.0.4 is the first version there: 0.0.1–0.0.3 were deleted.
+- chart-releaser only adds to `index.yaml`, never removes. Deleting a GitHub release leaves its entry, and
+  `helm search` then lists a version whose download is 404: remove the entry on `gh-pages` in the same repair.
+- chart-releaser commits `index.yaml` straight to `gh-pages` as the GitHub Actions app, signed through GitHub's
+  API (`.github/cr.yaml`). So the `gh-pages` ruleset is deletion and non-fast-forward only: a pull-request rule
+  would refuse that commit and leave the release half-published.
 
 ## CI
 

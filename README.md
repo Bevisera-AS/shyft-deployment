@@ -14,7 +14,7 @@ cluster, with `kubectl port-forward` (printed after install), or through an inte
 Everything about the chart itself, including every value:
 [charts/shyft-hydrology/README.md](charts/shyft-hydrology/README.md).
 
-## Install (once released)
+## Install
 
 ```sh
 helm repo add shyft https://bevisera-as.github.io/shyft-deployment
@@ -29,8 +29,7 @@ Every chart package has a build-provenance attestation. To check one you downloa
 `gh attestation verify shyft-hydrology-<x.y.z>.tgz --repo Bevisera-AS/shyft-deployment`.
 
 The repository moved from `lazyoldbear/shyft-deployment` on 2026-11-19. The old Helm repository URL,
-`https://lazyoldbear.github.io/shyft-deployment`, no longer works: add the one above instead. Packages up to 0.0.3
-were attested under the old owner and verify with `--owner lazyoldbear` in place of `--repo`.
+`https://lazyoldbear.github.io/shyft-deployment`, no longer works: add the one above instead.
 
 ## Develop
 
