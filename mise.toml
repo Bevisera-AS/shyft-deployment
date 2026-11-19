@@ -85,11 +85,13 @@ echo "generated files are up to date"
 # --- Static checks
 
 [tasks.lint]
-description = "ct lint on every chart (yamllint, Chart.yaml, helm lint per ci/ file), then examples, changelog, scripts, CI test steps"
+description = "ct lint on every chart (yamllint, Chart.yaml, helm lint per ci/ file), then examples, changelog, licence copy, scripts, CI test steps"
 run = [
   "ct lint --config .github/ct.yaml --all --check-version-increment=false",
   "yamllint --config-file .github/lintconf.yaml --strict $CHART/examples $CHART/tests",
   "hack/check-changelog.sh",
+  # The package carries the chart's own copy of LICENSE (MIT asks for the notice in every copy): keep it the same.
+  'for c in charts/*/; do cmp -s LICENSE "${c}LICENSE" || { echo "${c}LICENSE differs from LICENSE: cp LICENSE ${c}" >&2; exit 1; }; done',
   "shellcheck hack/*.sh",
   # CI runs each kind test as its own step: a new hack/*-test.sh must get one, or CI would skip it.
   'for t in hack/*-test.sh; do n=${t#hack/}; grep -qE "run: mise run test ${n%-test.sh}\$" .github/workflows/lint-test.yaml || { echo "$t has no step in .github/workflows/lint-test.yaml" >&2; exit 1; }; done',

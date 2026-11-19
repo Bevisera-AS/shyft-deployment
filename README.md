@@ -61,6 +61,10 @@ agent. If you maintain this without one, the conventional setup may suit you bet
 Rules for humans and agents: [AGENTS.md](AGENTS.md).
 What the chart relies on in Shyft: [docs/shyft-services.md](docs/shyft-services.md).
 
+## License
+
+[MIT](LICENSE). The chart package carries the same text, so a downloaded chart has it too.
+
 ## References
 
 - [Shyft with podman](https://gitlab.com/shyft-os/shyft/-/wikis/How-to/Run-a-complete-Shyft-micro-service-system-with-podman): the service layout this chart follows, and sizing

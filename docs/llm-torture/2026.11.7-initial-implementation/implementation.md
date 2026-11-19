@@ -38,7 +38,8 @@ on GitHub yet, and no profile has been tried on a real platform.
 - [x] `docs/shyft-services.md`: ports, env, scripts, drms registration, image facts
 - [ ] Commit and push. Then, in the GitHub settings: branch protection on `master` with the three required
       checks; a `release` environment limited to `master`; the Renovate app; delete the stray `main` branch
-- [ ] `LICENSE` (the file is a placeholder), then `license` in `Chart.yaml`
+- [x] `LICENSE`: MIT, Olga Silantyeva and Ingvarr Zhmakin. A copy in the chart, so the package carries it, and
+      `artifacthub.io/license` in `Chart.yaml`
 - [ ] CODEOWNERS
 
 Dropped: `.pre-commit-config.yaml` (it would repeat the mise tasks), and a Claude Code hook that blocks
@@ -91,7 +92,6 @@ non-kind contexts (the mise tasks use their own kubeconfig; the rule in CLAUDE.m
 
 ## Open questions
 
-- Licence?
 - Can NIRD run Helm? Fallback: `mise run render sigma2-nird` and apply the output.
 - Does NIRD's network plugin enforce NetworkPolicy? Which Kubernetes version does it run (the chart needs 1.30+)?
 - Sigma2's registry host, claim names, and the uid/gid that own the storage.
