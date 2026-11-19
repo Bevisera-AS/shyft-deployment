@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Every chart's CHANGELOG.md has a section for the version in its Chart.yaml. The release workflow takes the
-# release notes from that section, so a missing one would fail only after the merge. Called by `mise run lint`.
+# release notes from that section, so a missing one would fail only after the merge. List items use `*`, not
+# `-`. Called by `mise run lint`.
 set -euo pipefail
 
 rc=0
@@ -10,6 +11,10 @@ for chart in charts/*/; do
     echo "${chart}CHANGELOG.md: has [${version}]"
   else
     echo "${chart}CHANGELOG.md: no '## [${version}] - YYYY-MM-DD' section" >&2
+    rc=1
+  fi
+  if grep -n '^ *- ' "${chart}CHANGELOG.md" >&2; then
+    echo "${chart}CHANGELOG.md: list items above use '-'; write '*'" >&2
     rc=1
   fi
 done
