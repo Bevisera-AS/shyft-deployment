@@ -4,8 +4,8 @@ Helm chart for the [Shyft](https://gitlab.com/shyft-os/shyft) hydrology micro-se
 Sigma2 NIRD, AWS EKS, Azure AKS; kind in CI.
 
 > Task: [task.md](docs/llm-torture/2026.11.7-initial-implementation/task.md).
-> Plan and progress: [implementation.md](docs/llm-torture/2026.11.7-initial-implementation/implementation.md).
-> Tick its boxes as you finish items.
+> Plan: [implementation.md](docs/llm-torture/2026.11.7-initial-implementation/implementation.md). It records past
+> work: read it, never edit it, not even to tick a box.
 
 ## Ground rules
 
@@ -39,7 +39,8 @@ charts/shyft-hydrology/  chart
   examples/              platform profiles: rendered and validated, never installed in CI
 hack/                    scripts called by the mise tasks; kind.sh guards every cluster call; *-test.sh are the kind tests
 docs/                    shyft-services.md (what the chart relies on in Shyft), platforms.md
-docs/llm-torture/<date>-<slug>/  one piece of work: task.md (requirements, assumptions) + implementation.md (plan)
+docs/llm-torture/<date>-<slug>/  one piece of work: task.md (requirements, assumptions) + implementation.md (plan);
+                         a record of the past once written: never edited
 .github/                 workflows, ct/kind/yamllint config, Renovate
 mise.toml                every tool, pinned, and every task (`mise tasks` lists them)
 ```
