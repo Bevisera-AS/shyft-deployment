@@ -3,6 +3,27 @@ entries:
   shyft-hydrology:
   - apiVersion: v2
     appVersion: 37.3.0-1.1
+    created: "2026-11-19T20:18:50.688062017Z"
+    description: Shyft hydrology micro-services with a persistent core and scalable
+      drms compute nodes
+    digest: 3d596eaa26a151f50d3f94712d5b3dd4d44fea5b26c0574f76ecfe7d2c1aa614
+    home: https://github.com/Bevisera-AS/shyft-deployment
+    keywords:
+    - shyft
+    - hydrology
+    - time-series
+    - hpc
+    kubeVersion: '>=1.30.0-0'
+    name: shyft-hydrology
+    sources:
+    - https://github.com/Bevisera-AS/shyft-deployment
+    - https://gitlab.com/shyft-os/shyft
+    type: application
+    urls:
+    - https://github.com/Bevisera-AS/shyft-deployment/releases/download/shyft-hydrology-0.0.4/shyft-hydrology-0.0.4.tgz
+    version: 0.0.4
+  - apiVersion: v2
+    appVersion: 37.3.0-1.1
     created: "2026-11-19T11:27:00.065460295Z"
     description: Shyft hydrology micro-services with a persistent core and scalable
       drms compute nodes
@@ -22,4 +43,4 @@ entries:
     urls:
     - https://github.com/lazyoldbear/shyft-deployment/releases/download/shyft-hydrology-0.0.3/shyft-hydrology-0.0.3.tgz
     version: 0.0.3
-generated: "2026-11-19T11:27:00.065467157Z"
+generated: "2026-11-19T20:18:50.688069383Z"
