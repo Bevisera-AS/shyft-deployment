@@ -1,10 +1,6 @@
 # shyft-deployment
 
-Helm chart for the [Shyft](https://gitlab.com/shyft-os/shyft) hydrology micro-services on Kubernetes:
-Sigma2 NIRD, AWS EKS, Azure AKS.
-
-> Not released yet. Task and plan:
-> [docs/llm-torture/2026.11.7-initial-implementation](docs/llm-torture/2026.11.7-initial-implementation/).
+Helm chart for the [Shyft](https://gitlab.com/shyft-os/shyft) hydrology micro-services on Kubernetes.
 
 ## What it deploys
 
