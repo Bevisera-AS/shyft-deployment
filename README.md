@@ -24,9 +24,6 @@ helm pull shyft/shyft-hydrology --version <version>
 gh attestation verify shyft-hydrology-<version>.tgz --repo Bevisera-AS/shyft-deployment
 ```
 
-The repository moved from `lazyoldbear/shyft-deployment` on 2026-11-19. 0.0.3, published before the move, was
-attested there: verify it with `--owner lazyoldbear` in place of `--repo`.
-
 ## Licence
 
 [MIT](https://github.com/Bevisera-AS/shyft-deployment/blob/master/LICENSE).
