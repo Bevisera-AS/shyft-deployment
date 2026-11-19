@@ -70,6 +70,9 @@ jobs:
       - name: Publish releases and index
         uses: helm/chart-releaser-action@92c6b97fa9f664492a2592e0d1d80bc6bf378957  # v1.9.0
         with:
+          # v1.10.0, the action's default, sends a malformed signed-commit request (helm/chart-releaser#678).
+          # renovate: datasource=github-releases depName=helm/chart-releaser
+          version: v1.10.1
           config: .github/cr.yaml  # signs the index commit: gh-pages requires verified signatures
           skip_packaging: true
           skip_existing: true

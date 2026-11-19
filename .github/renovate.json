@@ -20,6 +20,16 @@
     },
     {
       "customType": "regex",
+      "description": "Tool versions given to actions in the workflows, marked with a `# renovate:` comment on the line above",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s+version: (?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
       "description": "The Shyft image tag: appVersion in Chart.yaml, marked with a `# renovate:` comment on the line above",
       "managerFilePatterns": [
         "/^charts/[^/]+/Chart\\.yaml$/"
